@@ -1,412 +1,520 @@
-import { motion, useScroll, useTransform, useInView } from 'framer-motion'
-import { useRef } from 'react'
+import { motion, useScroll, useTransform, useInView, useMotionValueEvent } from 'framer-motion'
+import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp,
-  Zap,
   MessageCircle,
   Shield,
   ArrowRight,
   Star,
-  ChevronRight,
   Check,
-  Play
+  Play,
+  Zap,
+  ChevronRight,
+  Clock,
+  Users,
+  BarChart3,
+  Heart
 } from 'lucide-react'
 
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
-  green: { deep: '#2D5016', mid: '#4A7C28', light: '#8BAA6B', pale: '#E8F0DE', wash: '#F4F8EF' },
-  red:   { deep: '#6B1D1D', mid: '#8B3A3A', accent: '#A85454' },
-  text:  '#1A1A1A',
-  muted: '#6B6B6B',
-  border:'#E5E5E5',
-  white: '#FAFAF8',
+  g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 500: '#5E9A34', 400: '#8BAA6B', 300: '#B5CDA3', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
+  r: { 900: '#3D1212', 800: '#5C1E1E', 700: '#6B1D1D', 600: '#8B3A3A', 500: '#A85454', 400: '#C47A7A' },
+  t: { 900: '#0F0F0F', 800: '#1A1A1A', 700: '#2D2D2D', 600: '#4A4A4A', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
+  b: '#E5E5E5',
+  w: '#FAFAF8',
 }
 
-/* ── Reusable section wrapper ──────────────────────────── */
-function Section({ children, className = '', id, bg = 'bg-transparent' }: {
-  children: React.ReactNode; className?: string; id?: string; bg?: string
-}) {
-  const ref = useRef(null)
-  const inView = useInView(ref, { once: true, margin: '-60px' })
-  return (
-    <motion.section
-      ref={ref} id={id}
-      initial={{ opacity: 0, y: 48 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-      className={`${bg} ${className}`}
-    >
-      {children}
-    </motion.section>
-  )
-}
-
-/* ── Parallax floating shape ───────────────────────────── */
-function FloatingShape({ className, delay = 0, style }: { className: string; delay?: number; style?: React.CSSProperties }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.7 }}
-      animate={{ opacity: 0.12, scale: 1 }}
-      transition={{ duration: 2, delay }}
-      className={`absolute rounded-full blur-3xl pointer-events-none ${className}`}
-      style={style}
-    />
-  )
-}
+const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
 
 /* ═══════════════════════════════════════════════════════ */
 export default function Landing() {
-  const { scrollYProgress } = useScroll()
-  const heroY = useTransform(scrollYProgress, [0, 0.3], [0, -80])
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 0.96])
+  const [scroll, setScroll] = useState(0)
+  const heroRef = useRef(null)
+
+  useEffect(() => {
+    const onScroll = () => setScroll(window.scrollY)
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: C.white, color: C.text }}>
-      {/* ── Parallax background shapes ─────────────────── */}
-      <div className="fixed inset-0 z-0 overflow-hidden">
-        <FloatingShape className="w-[600px] h-[600px] -top-20 -left-32" style={{ background: C.green.pale }} delay={0} />
-        <FloatingShape className="w-[500px] h-[500px] top-1/3 -right-24" style={{ background: '#F0E8E0' }} delay={0.4} />
-        <FloatingShape className="w-[400px] h-[400px] bottom-0 left-1/4" style={{ background: C.green.wash }} delay={0.8} />
-      </div>
+    <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: C.w, color: C.t[900] }}>
 
       {/* ── NAV ─────────────────────────────────────────── */}
-      <motion.nav
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="sticky top-0 z-50 backdrop-blur-xl border-b"
-        style={{ backgroundColor: 'rgba(250,250,248,0.85)', borderColor: C.border }}
+      <nav className="fixed top-0 left-0 right-0 z-50 transition-all duration-300"
+        style={{
+          backgroundColor: scroll > 60 ? 'rgba(250,250,248,0.92)' : 'transparent',
+          backdropFilter: scroll > 60 ? 'blur(20px)' : 'none',
+          borderBottom: scroll > 60 ? `1px solid ${C.b}` : '1px solid transparent',
+        }}
       >
-        <div className="max-w-6xl mx-auto flex items-center justify-between px-6 lg:px-12 py-5">
+        <div className="max-w-[1200px] mx-auto flex items-center justify-between px-6 lg:px-10 h-[72px]">
           <Link to="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: C.green.deep }}>
-              <TrendingUp className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: C.g[800] }}>
+              <TrendingUp className="w-4 h-4 text-white" />
             </div>
-            <span className="text-lg font-semibold tracking-tight" style={{ fontFamily: "'DM Serif Display', serif" }}>FillIQ</span>
+            <span className="text-[17px] font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-sm" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>
-            <a href="#services" className="hover:text-black transition-colors">Services</a>
-            <a href="#how" className="hover:text-black transition-colors">How It Works</a>
-            <a href="#pricing" className="hover:text-black transition-colors">Pricing</a>
+          <div className="hidden md:flex items-center gap-7 text-[14px]" style={{ color: C.t[600], fontFamily: font.body }}>
+            {['Product', 'How it works', 'Pricing'].map(t => (
+              <a key={t} href={`#${t.toLowerCase().replace(/ /g, '-')}`}
+                className="hover:text-black transition-colors cursor-pointer"
+              >{t}</a>
+            ))}
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link to="/login" className="text-sm transition-colors" style={{ color: C.muted }}>Sign In</Link>
+          <div className="flex items-center gap-4">
+            <Link to="/login" className="text-[14px] hidden sm:block" style={{ color: C.t[500], fontFamily: font.body }}>Sign in</Link>
             <Link to="/login"
-              className="px-5 py-2.5 rounded-full text-sm font-semibold text-white transition-all hover:opacity-90"
-              style={{ backgroundColor: C.green.deep }}
-            >Get Started</Link>
+              className="px-5 py-2.5 rounded-full text-[13px] font-semibold text-white transition-all hover:shadow-lg hover:shadow-black/10"
+              style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+            >Start free →</Link>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <Section className="relative z-10 max-w-6xl mx-auto px-6 lg:px-12 pt-20 pb-28 lg:pt-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          <div>
-            {/* Badge */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm mb-8"
-              style={{ backgroundColor: C.green.pale, color: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}
+      <section ref={heroRef} className="relative pt-32 pb-20 lg:pt-44 lg:pb-32">
+        {/* Background grain + gradient */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-[0.07]"
+            style={{ background: `radial-gradient(ellipse, ${C.g[700]}, transparent 70%)` }} />
+        </div>
+
+        <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
+          <div className="max-w-[680px]">
+            {/* Eyebrow */}
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[12px] font-medium mb-8 tracking-wide"
+              style={{ backgroundColor: C.g[100], color: C.g[800], fontFamily: font.body }}
             >
-              <Star className="w-3.5 h-3.5 fill-current" style={{ color: C.red.mid }} />
-              Rated 5.0 from 200+ reviews
+              <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.g[600] }} />
+              AI-POWERED NO-SHOW PREVENTION
             </motion.div>
 
             {/* Headline */}
-            <motion.h1
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="text-5xl lg:text-7xl leading-[1.08] tracking-tight"
-              style={{ fontFamily: "'DM Serif Display', serif" }}
+            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
+              style={{ fontFamily: font.display }}
             >
-              Every empty<br />
-              spot is<br />
-              <span style={{ color: C.green.deep }}>lost revenue.</span>
+              Every no-show<br />
+              costs you <span style={{ color: C.g[700] }}>R150.</span><br />
+              <span style={{ color: C.r[700] }}>Stop the bleed.</span>
             </motion.h1>
 
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="mt-7 text-lg max-w-md leading-relaxed"
-              style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}
+            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+              className="mt-7 text-[18px] leading-[1.6] max-w-[500px]"
+              style={{ color: C.t[500], fontFamily: font.body }}
             >
-              FillIQ predicts no-shows, fills cancelled spots via WhatsApp in 60 seconds, and stops members from leaving — before you even notice.
+              FillIQ predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
             </motion.p>
 
             {/* CTAs */}
-            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              className="mt-10 flex flex-wrap gap-4"
+            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+              className="mt-10 flex flex-wrap items-center gap-4"
             >
               <Link to="/login"
-                className="group inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-base font-semibold text-white transition-all hover:opacity-90"
-                style={{ backgroundColor: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}
+                className="group px-7 py-4 rounded-full text-[15px] font-semibold text-white flex items-center gap-2 transition-all hover:shadow-xl hover:shadow-black/10 hover:-translate-y-0.5"
+                style={{ backgroundColor: C.g[800], fontFamily: font.body }}
               >
-                Start free <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                Start free, no card needed
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
-              <button
-                className="inline-flex items-center gap-2.5 px-7 py-4 rounded-full text-base font-medium border transition-all hover:bg-black/5"
-                style={{ borderColor: C.border, fontFamily: "'DM Sans', sans-serif" }}
+              <button className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
+                style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
               >
-                <Play className="w-4 h-4" /> Watch demo
+                <Play className="w-4 h-4" /> See it in action
               </button>
             </motion.div>
 
-            {/* Social proof */}
+            {/* Trust bar */}
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="mt-12 flex items-center gap-4"
+              className="mt-14 flex items-center gap-6 flex-wrap"
             >
-              <div className="flex -space-x-2.5">
-                {[C.green.deep, C.red.deep, '#3B6B2A', '#7A3B3B'].map((c, i) => (
-                  <div key={i} className="w-9 h-9 rounded-full border-2 flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ backgroundColor: c, borderColor: C.white }}
-                  >{['SJ','MS','EW','LD'][i]}</div>
+              <div className="flex -space-x-2">
+                {[
+                  { bg: C.g[800], label: 'SJ' },
+                  { bg: C.r[700], label: 'MS' },
+                  { bg: C.g[600], label: 'EW' },
+                  { bg: C.r[500], label: 'LD' },
+                ].map((a, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2"
+                    style={{ backgroundColor: a.bg, borderColor: C.w }}
+                  >{a.label}</div>
                 ))}
               </div>
-              <div className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                <div className="flex items-center gap-0.5" style={{ color: C.red.mid }}>
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
-                </div>
-                <span style={{ color: C.muted }}>Loved by 50+ SA studios</span>
+              <div className="h-5 w-px" style={{ background: C.b }} />
+              <div>
+                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5" style={{ color: C.r[600], fill: C.r[600] }} />)}</div>
+                <p className="text-[12px] mt-0.5" style={{ color: C.t[400], fontFamily: font.body }}>50+ studios across South Africa</p>
               </div>
             </motion.div>
           </div>
 
-          {/* ── Hero visual: parallax dashboard ────────── */}
-          <motion.div style={{ y: heroY, scale: heroScale }} className="relative flex items-center justify-center">
-            {/* Ambient blurs */}
-            <div className="absolute w-[380px] h-[380px] rounded-full blur-[100px] opacity-30" style={{ background: C.green.pale }} />
-            <div className="absolute w-[280px] h-[280px] rounded-full blur-[80px] opacity-20 translate-x-20 translate-y-12" style={{ background: '#EDE4DC' }} />
-
-            <div className="relative w-full max-w-md aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl"
-              style={{ border: `1px solid ${C.border}`, backgroundColor: '#fff' }}
+          {/* ── Dashboard preview ──────────────────────── */}
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+            className="mt-20 lg:mt-0 lg:absolute lg:right-10 lg:top-1/2 lg:-translate-y-1/2 w-full lg:w-[520px]"
+          >
+            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/[0.08]"
+              style={{ border: `1px solid ${C.b}`, backgroundColor: '#fff' }}
             >
-              {/* Browser chrome */}
-              <div className="flex items-center gap-2 px-4 py-3" style={{ backgroundColor: '#F5F5F3', borderBottom: `1px solid ${C.border}` }}>
+              {/* Chrome bar */}
+              <div className="flex items-center gap-2 px-4 h-10" style={{ backgroundColor: '#F7F7F5', borderBottom: `1px solid ${C.b}` }}>
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#E07A5F' }} />
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#F2CC8F' }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.green.light }} />
-                <span className="ml-2 text-[10px]" style={{ color: C.muted }}>filliq.vercel.app</span>
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.g[400] }} />
+                <div className="ml-3 flex-1 rounded-md h-5 flex items-center px-2.5" style={{ background: '#EEEEEC' }}>
+                  <span className="text-[10px]" style={{ color: C.t[400] }}>filliq.vercel.app</span>
+                </div>
               </div>
 
-              <div className="p-5 space-y-4">
-                {/* Metric cards */}
-                <div className="grid grid-cols-2 gap-3">
+              <div className="p-5">
+                {/* Header row */}
+                <div className="flex items-center justify-between mb-5">
+                  <div>
+                    <h3 className="text-[15px] font-semibold" style={{ fontFamily: font.display }}>Dashboard</h3>
+                    <p className="text-[11px]" style={{ color: C.t[400], fontFamily: font.body }}>Today, 27 Mar 2026</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: C.g[100], color: C.g[800] }}>
+                    <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.g[600] }} />
+                    Live
+                  </div>
+                </div>
+
+                {/* KPI cards */}
+                <div className="grid grid-cols-2 gap-2.5 mb-4">
                   {[
-                    { v: 'R4,320', l: 'Recovered', accent: C.green.deep },
-                    { v: '18', l: 'Spots Filled', accent: C.red.mid },
-                    { v: '86%', l: 'Fill Rate', accent: C.green.mid },
-                    { v: '3', l: 'Saved', accent: C.red.accent },
+                    { icon: <BarChart3 className="w-3.5 h-3.5" />, v: 'R4,320', l: 'Recovered', c: C.g[800], bg: C.g[50] },
+                    { icon: <Users className="w-3.5 h-3.5" />, v: '18', l: 'Spots filled', c: C.r[700], bg: '#FDF2F2' },
+                    { icon: <Zap className="w-3.5 h-3.5" />, v: '86%', l: 'Fill rate', c: C.g[700], bg: C.g[50] },
+                    { icon: <Heart className="w-3.5 h-3.5" />, v: '3', l: 'Churns saved', c: C.r[600], bg: '#FDF2F2' },
                   ].map((card, i) => (
                     <motion.div key={i}
-                      initial={{ opacity: 0, y: 12 }}
+                      initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.7 + i * 0.1 }}
-                      className="rounded-xl p-3.5"
-                      style={{ backgroundColor: C.green.wash, border: `1px solid ${C.green.pale}` }}
+                      transition={{ delay: 0.9 + i * 0.08 }}
+                      className="rounded-xl p-3"
+                      style={{ backgroundColor: card.bg, border: `1px solid ${C.b}` }}
                     >
-                      <div className="text-lg font-bold" style={{ color: card.accent, fontFamily: "'DM Serif Display', serif" }}>{card.v}</div>
-                      <div className="text-[10px] mt-0.5" style={{ color: C.muted }}>{card.l}</div>
+                      <div className="flex items-center gap-1.5 mb-1.5" style={{ color: card.c }}>{card.icon}<span className="text-[10px] font-medium">{card.l}</span></div>
+                      <div className="text-[22px] font-bold leading-none" style={{ color: card.c, fontFamily: font.display }}>{card.v}</div>
                     </motion.div>
                   ))}
                 </div>
 
-                {/* Mini bar chart */}
-                <div className="rounded-xl p-4 flex items-end gap-1.5 h-20"
-                  style={{ backgroundColor: '#FAFAF8', border: `1px solid ${C.border}` }}
-                >
-                  {[35, 60, 45, 75, 50, 85, 65, 90, 55, 80, 70, 95].map((h, i) => (
-                    <motion.div key={i}
-                      initial={{ height: 0 }}
-                      animate={{ height: `${h}%` }}
-                      transition={{ delay: 1 + i * 0.04, duration: 0.4 }}
-                      className="flex-1 rounded-sm"
-                      style={{ backgroundColor: i % 2 === 0 ? C.green.deep : C.green.light }}
-                    />
+                {/* Chart */}
+                <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: '#FAFAF8', border: `1px solid ${C.b}` }}>
+                  <p className="text-[11px] font-medium mb-3" style={{ color: C.t[500], fontFamily: font.body }}>Fill rate — last 14 days</p>
+                  <div className="flex items-end gap-1 h-16">
+                    {[40, 55, 35, 70, 45, 80, 60, 90, 50, 85, 65, 95, 75, 88].map((h, i) => (
+                      <motion.div key={i}
+                        initial={{ height: 0 }}
+                        animate={{ height: `${h}%` }}
+                        transition={{ delay: 1.1 + i * 0.03, duration: 0.4, ease: 'easeOut' }}
+                        className="flex-1 rounded-sm"
+                        style={{ backgroundColor: h > 70 ? C.g[700] : C.g[300] }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Activity list */}
+                <div className="space-y-2">
+                  {[
+                    { t: 'Spot filled: Morning Yoga Flow', time: '8 min ago', c: C.g[800], dot: C.g[600] },
+                    { t: 'Risk alert: Emma W. (score 85)', time: '23 min ago', c: C.r[700], dot: C.r[600] },
+                    { t: 'Rebook nudge sent to Mike S.', time: '1 hr ago', c: C.t[600], dot: C.t[300] },
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < 2 ? `1px solid ${C.b}` : 'none' }}>
+                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.dot }} />
+                      <p className="text-[11px] flex-1" style={{ color: item.c, fontFamily: font.body }}>{item.t}</p>
+                      <span className="text-[10px] flex-shrink-0" style={{ color: C.t[400] }}>{item.time}</span>
+                    </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            {/* Floating notification - WhatsApp */}
+            {/* Floating badge — risk */}
             <motion.div
-              initial={{ opacity: 0, x: 24, y: 16 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              transition={{ delay: 1.4 }}
-              className="absolute -bottom-3 -right-3 rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
-              style={{ backgroundColor: C.green.deep }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.6 }}
+              className="absolute -left-4 top-8 rounded-xl px-3.5 py-2.5 shadow-lg shadow-black/10"
+              style={{ backgroundColor: C.r[700] }}
             >
-              <MessageCircle className="w-5 h-5 text-white" />
-              <div className="text-white">
-                <div className="text-xs font-bold">WhatsApp Sent</div>
-                <div className="text-xs opacity-75">Spot filled in 8 min ✓</div>
-              </div>
+              <p className="text-[11px] font-bold text-white">⚠ No-show risk: 85</p>
+              <p className="text-[10px] text-white/70">Emma Williams — drop-in</p>
             </motion.div>
 
-            {/* Floating risk badge */}
+            {/* Floating badge — whatsapp */}
             <motion.div
-              initial={{ opacity: 0, x: -24, y: -16 }}
-              animate={{ opacity: 1, x: 0, y: 0 }}
-              transition={{ delay: 1.6 }}
-              className="absolute -top-3 -left-3 rounded-2xl px-4 py-3 shadow-lg"
-              style={{ backgroundColor: C.red.deep }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 1.8 }}
+              className="absolute -right-3 bottom-6 rounded-xl px-3.5 py-2.5 shadow-lg shadow-black/10 flex items-center gap-2.5"
+              style={{ backgroundColor: C.g[800] }}
             >
-              <div className="text-white text-xs font-bold">⚠ Risk Score: 85</div>
-              <div className="text-white text-xs opacity-75">Likely no-show</div>
+              <MessageCircle className="w-4 h-4 text-white" />
+              <div className="text-white">
+                <p className="text-[11px] font-bold">Spot filled ✓</p>
+                <p className="text-[10px] opacity-70">Sarah replied in 4 min</p>
+              </div>
             </motion.div>
           </motion.div>
         </div>
-      </Section>
+      </section>
 
-      {/* ── SERVICES ────────────────────────────────────── */}
-      <Section id="services" className="relative z-10 max-w-6xl mx-auto px-6 lg:px-12 py-24">
-        <p className="text-sm font-medium tracking-wide uppercase mb-3" style={{ color: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}>Our Services</p>
-        <h2 className="text-4xl lg:text-5xl leading-tight max-w-lg" style={{ fontFamily: "'DM Serif Display', serif" }}>
-          Three ways we keep your studio <span style={{ color: C.green.mid }}>full</span>
-        </h2>
-        <p className="mt-4 max-w-xl" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>
-          Predict cancellations, auto-fill empty spots, and retain at-risk members.
-        </p>
-
-        <div className="mt-14 grid md:grid-cols-3 gap-6">
-          {[
-            { icon: Zap, title: 'No-Show Predictor', desc: 'AI scores every booking 0-100. Know who\'s flaking before they do.', accent: C.green.deep, tag: 'Predict' },
-            { icon: MessageCircle, title: 'Auto-Fill Engine', desc: 'Cancelled spot? WhatsApp fires in 60 seconds. First reply wins.', accent: C.red.mid, tag: 'Fill' },
-            { icon: Shield, title: 'Churn Radar', desc: 'Catches disengaging members early. Auto-nudge saves them.', accent: C.green.mid, tag: 'Retain' },
-          ].map((svc, i) => (
-            <motion.div key={i} whileHover={{ y: -6 }} transition={{ duration: 0.25 }}
-              className="group rounded-2xl p-8 transition-colors"
-              style={{ backgroundColor: '#fff', border: `1px solid ${C.border}` }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center" style={{ backgroundColor: C.green.pale }}>
-                  <svc.icon className="w-6 h-6" style={{ color: svc.accent }} />
-                </div>
-                <span className="text-xs font-medium" style={{ color: C.muted }}>{svc.tag}</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-2" style={{ fontFamily: "'DM Serif Display', serif" }}>{svc.title}</h3>
-              <p className="text-sm leading-relaxed" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>{svc.desc}</p>
-              <div className="mt-6 flex items-center gap-1.5 text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity"
-                style={{ color: C.green.deep }}
-              >Learn more <ChevronRight className="w-4 h-4" /></div>
-            </motion.div>
+      {/* ── MARQUEE — trust logos ──────────────────────── */}
+      <section className="border-y py-6 overflow-hidden" style={{ borderColor: C.b, backgroundColor: '#F7F7F5' }}>
+        <div className="flex items-center gap-12 animate-[marquee_30s_linear_infinite] whitespace-nowrap px-6"
+          style={{ fontFamily: font.body }}
+        >
+          {['The Fascia Movement Dome', 'Ballito Yoga Studio', 'Pause Pilates', 'Core Balance', 'Shala Yoga', 'Flex & Flow', 'Reform Studio', 'Zen Space',
+            'The Fascia Movement Dome', 'Ballito Yoga Studio', 'Pause Pilates', 'Core Balance', 'Shala Yoga', 'Flex & Flow', 'Reform Studio', 'Zen Space'
+          ].map((name, i) => (
+            <span key={i} className="text-[13px] font-medium flex items-center gap-2" style={{ color: C.t[400] }}>
+              <span className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold text-white" style={{ background: C.g[800] }}>
+                {name.split(' ').map(w => w[0]).join('').slice(0, 2)}
+              </span>
+              {name}
+            </span>
           ))}
         </div>
-      </Section>
+      </section>
 
-      {/* ── HOW IT WORKS ────────────────────────────────── */}
-      <Section id="how" className="relative z-10 py-24" bg="py-24" >
-        <div className="max-w-6xl mx-auto px-6 lg:px-12">
-          <p className="text-sm font-medium tracking-wide uppercase mb-3" style={{ color: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}>How It Works</p>
-          <h2 className="text-4xl lg:text-5xl leading-tight max-w-2xl" style={{ fontFamily: "'DM Serif Display', serif" }}>
-            Your studio, <span style={{ color: C.green.mid }}>always full</span>
+      {/* ── HOW IT WORKS ───────────────────────────────── */}
+      <SectionBg id="how-it-works">
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>How it works</p>
+          <h2 className="text-[clamp(2rem,4vw,3.2rem)] leading-[1.1] tracking-[-0.02em] max-w-lg" style={{ fontFamily: font.display }}>
+            Three steps to a <span style={{ color: C.g[700] }}>full studio</span>
           </h2>
 
-          <div className="mt-14 grid md:grid-cols-3 gap-8">
+          <div className="mt-16 grid md:grid-cols-3 gap-10">
             {[
-              { step: '01', title: 'Class Intelligence', desc: 'FillIQ scores every booking and predicts no-shows 3 hours before class. From soothing morning flows to packed evening sessions.', accent: C.green.deep },
-              { step: '02', title: 'Instant Recovery', desc: 'When a spot opens, our AI selects the best waitlist candidate and fires a WhatsApp in 60 seconds. First reply gets the spot.', accent: C.red.mid },
-              { step: '03', title: 'Member Retention', desc: 'Our churn radar catches disengaging members before they leave. Auto-nudges, rebook invites, and smart offers keep them on the mat.', accent: C.green.mid },
-            ].map((item, i) => (
-              <div key={i}>
-                <div className="text-6xl font-black mb-4" style={{ color: C.green.pale, fontFamily: "'DM Serif Display', serif" }}>{item.step}</div>
-                <h3 className="text-xl font-semibold mb-3" style={{ fontFamily: "'DM Serif Display', serif" }}>{item.title}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>{item.desc}</p>
-                <div className="mt-6 h-1 w-12 rounded-full" style={{ backgroundColor: item.accent }} />
-              </div>
+              { n: '01', icon: <Zap className="w-5 h-5" />, title: 'Predict', desc: 'Every booking gets a 0-100 no-show risk score. You know who\'s flaking 3 hours before class.', color: C.g[800] },
+              { n: '02', icon: <MessageCircle className="w-5 h-5" />, title: 'Auto-Fill', desc: 'Spot cancelled? WhatsApp fires instantly to your top 3 waitlist candidates. First reply gets it.', color: C.r[700] },
+              { n: '03', icon: <Shield className="w-5 h-5" />, title: 'Retain', desc: 'Churn radar catches members drifting away. Auto-nudges and rebook invites keep them active.', color: C.g[700] },
+            ].map((step, i) => (
+              <Reveal key={i} delay={i * 0.12}>
+                <div className="text-[48px] font-bold leading-none mb-5" style={{ color: C.g[200], fontFamily: font.display }}>{step.n}</div>
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: C.g[100], color: step.color }}>
+                  {step.icon}
+                </div>
+                <h3 className="text-[20px] font-semibold mb-2" style={{ fontFamily: font.display }}>{step.title}</h3>
+                <p className="text-[14px] leading-[1.7]" style={{ color: C.t[500], fontFamily: font.body }}>{step.desc}</p>
+                <div className="mt-5 h-[3px] w-10 rounded-full" style={{ backgroundColor: step.color }} />
+              </Reveal>
             ))}
           </div>
         </div>
-      </Section>
+      </SectionBg>
+
+      {/* ── PRODUCT ────────────────────────────────────── */}
+      <SectionBg id="product" style={{ backgroundColor: '#fff' }}>
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <div className="grid lg:grid-cols-2 gap-16 items-center">
+            <div>
+              <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>The product</p>
+              <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]" style={{ fontFamily: font.display }}>
+                Not just a dashboard.<br />
+                <span style={{ color: C.r[700] }}>A recovery engine.</span>
+              </h2>
+              <p className="mt-5 text-[15px] leading-[1.7] max-w-md" style={{ color: C.t[500], fontFamily: font.body }}>
+                FillIQ runs silently in the background. It scores, it fills, it nudges. You just see the revenue coming back.
+              </p>
+
+              <div className="mt-10 space-y-5">
+                {[
+                  { icon: <Clock className="w-4 h-4" />, t: '3 hours before class', d: 'Risk scores every booking' },
+                  { icon: <MessageCircle className="w-4 h-4" />, t: 'On cancellation', d: 'WhatsApp to top waitlist candidates' },
+                  { icon: <Users className="w-4 h-4" />, t: 'Every night at 2AM', d: 'Churn scoring all active members' },
+                  { icon: <BarChart3 className="w-4 h-4" />, t: '1st of each month', d: 'Revenue recovery report' },
+                ].map((item, i) => (
+                  <div key={i} className="flex items-start gap-4">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                      style={{ backgroundColor: C.g[100], color: C.g[800] }}
+                    >{item.icon}</div>
+                    <div>
+                      <p className="text-[14px] font-semibold" style={{ fontFamily: font.body }}>{item.t}</p>
+                      <p className="text-[13px]" style={{ color: C.t[500], fontFamily: font.body }}>{item.d}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Visual: mini timeline */}
+            <Reveal>
+              <div className="rounded-2xl p-6 lg:p-8" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
+                <div className="relative pl-8 space-y-6">
+                  {/* Timeline line */}
+                  <div className="absolute left-3 top-2 bottom-2 w-px" style={{ backgroundColor: C.g[300] }} />
+
+                  {[
+                    { time: '6:00 AM', event: 'Class scored — 2 at-risk bookings', badge: 'Scored', badgeColor: C.g[800] },
+                    { time: '6:45 AM', event: 'Sarah cancelled — WhatsApp fired', badge: 'Filled', badgeColor: C.r[700] },
+                    { time: '6:49 AM', event: 'Mike replied YES — spot confirmed', badge: 'Booked', badgeColor: C.g[700] },
+                    { time: '7:00 AM', event: 'Class starts — full capacity ✓', badge: 'Full', badgeColor: C.g[600] },
+                  ].map((item, i) => (
+                    <motion.div key={i}
+                      initial={{ opacity: 0, x: -12 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: i * 0.15 }}
+                      className="relative"
+                    >
+                      <div className="absolute -left-5 top-1 w-3 h-3 rounded-full border-2" style={{ borderColor: item.badgeColor, backgroundColor: C.w }} />
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[11px] font-medium" style={{ color: C.t[400], fontFamily: font.body }}>{item.time}</p>
+                          <p className="text-[14px] mt-0.5" style={{ fontFamily: font.body }}>{item.event}</p>
+                        </div>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: item.badgeColor, color: '#fff' }}>{item.badge}</span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+          </div>
+        </div>
+      </SectionBg>
 
       {/* ── STATS ───────────────────────────────────────── */}
-      <Section className="relative z-10 max-w-6xl mx-auto px-6 lg:px-12 py-24">
-        <div className="rounded-3xl p-10 lg:p-16" style={{ backgroundColor: C.green.wash, border: `1px solid ${C.green.pale}` }}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <SectionBg>
+        <div className="max-w-[1000px] mx-auto px-6 lg:px-10 py-24">
+          <div className="rounded-2xl p-8 lg:p-12" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+              {[
+                { v: 'R2.1M', l: 'Revenue recovered' },
+                { v: '3,400+', l: 'Spots filled' },
+                { v: '94%', l: 'Fill rate' },
+                { v: '<8 min', l: 'Avg fill time' },
+              ].map((s, i) => (
+                <Reveal key={i} delay={i * 0.08}>
+                  <div className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>{s.v}</div>
+                  <div className="text-[13px] mt-1" style={{ color: C.t[500], fontFamily: font.body }}>{s.l}</div>
+                </Reveal>
+              ))}
+            </div>
+          </div>
+        </div>
+      </SectionBg>
+
+      {/* ── PRICING ─────────────────────────────────────── */}
+      <SectionBg id="pricing" style={{ backgroundColor: '#fff' }}>
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>Pricing</p>
+          <h2 className="text-[clamp(2rem,4vw,3.2rem)] leading-[1.1] tracking-[-0.02em] max-w-lg" style={{ fontFamily: font.display }}>
+            Simple plans for a <span style={{ color: C.g[700] }}>full studio</span>
+          </h2>
+
+          <div className="mt-14 grid md:grid-cols-4 gap-4">
             {[
-              { v: 'R2.1M', l: 'Revenue Recovered' },
-              { v: '3,400+', l: 'Spots Filled' },
-              { v: '94%', l: 'Fill Rate' },
-              { v: '8 min', l: 'Avg Fill Time' },
-            ].map((s, i) => (
-              <motion.div key={i} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: i * 0.1 }}>
-                <div className="text-3xl lg:text-4xl font-bold" style={{ color: C.green.deep, fontFamily: "'DM Serif Display', serif" }}>{s.v}</div>
-                <div className="text-sm mt-1" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>{s.l}</div>
-              </motion.div>
+              { name: 'Starter', price: 'Free', desc: 'Try it out', features: ['1 studio', '50 bookings/mo', 'Risk scoring', 'Email support'], hl: false },
+              { name: 'Growth', price: 'R299', desc: '/month', features: ['1 studio', '500 bookings/mo', 'WhatsApp auto-fill', 'Churn radar', 'Dashboard'], hl: true },
+              { name: 'Studio Pro', price: 'R599', desc: '/month', features: ['Up to 3 studios', 'Unlimited bookings', 'Priority WhatsApp', 'API access', 'Reports'], hl: false },
+              { name: 'Enterprise', price: 'Custom', desc: 'Chains & franchises', features: ['Unlimited studios', 'White-label', 'Dedicated support', 'Custom integrations'], hl: false },
+            ].map((plan, i) => (
+              <Reveal key={i} delay={i * 0.08}>
+                <div className="rounded-2xl p-6 h-full flex flex-col"
+                  style={{
+                    backgroundColor: plan.hl ? C.g[800] : '#FAFAF8',
+                    border: `1px solid ${plan.hl ? C.g[800] : C.b}`,
+                    color: plan.hl ? '#fff' : C.t[900],
+                  }}
+                >
+                  <p className="text-[12px] font-medium" style={{ color: plan.hl ? C.g[300] : C.t[500], fontFamily: font.body }}>{plan.name}</p>
+                  <div className="mt-2 text-[32px] font-bold" style={{ fontFamily: font.display }}>{plan.price}</div>
+                  <p className="text-[11px] mt-0.5" style={{ color: plan.hl ? C.g[400] : C.t[400] }}>{plan.desc}</p>
+                  <ul className="mt-5 space-y-2.5 flex-1">
+                    {plan.features.map((f, j) => (
+                      <li key={j} className="flex items-start gap-2 text-[13px]" style={{ fontFamily: font.body }}>
+                        <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: plan.hl ? C.g[300] : C.g[700] }} />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                  <Link to="/login"
+                    className="mt-6 block text-center py-2.5 rounded-full text-[13px] font-semibold transition-all"
+                    style={{
+                      backgroundColor: plan.hl ? '#fff' : 'transparent',
+                      color: plan.hl ? C.g[900] : C.t[800],
+                      border: plan.hl ? 'none' : `1px solid ${C.b}`,
+                      fontFamily: font.body,
+                    }}
+                  >{plan.hl ? 'Get Started' : 'Choose Plan'}</Link>
+                </div>
+              </Reveal>
             ))}
           </div>
         </div>
-      </Section>
-
-      {/* ── PRICING ─────────────────────────────────────── */}
-      <Section id="pricing" className="relative z-10 max-w-6xl mx-auto px-6 lg:px-12 py-24">
-        <p className="text-sm font-medium tracking-wide uppercase mb-3" style={{ color: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}>Pricing</p>
-        <h2 className="text-4xl lg:text-5xl leading-tight max-w-xl" style={{ fontFamily: "'DM Serif Display', serif" }}>
-          Simple plans for a <span style={{ color: C.green.mid }}>full studio</span>
-        </h2>
-
-        <div className="mt-14 grid md:grid-cols-4 gap-5">
-          {[
-            { name: 'Starter', price: 'Free', desc: 'For trying FillIQ out', features: ['1 studio', '50 bookings/mo', 'Risk scoring', 'Email support'], highlight: false },
-            { name: 'Growth', price: 'R299', desc: 'per month', features: ['1 studio', '500 bookings/mo', 'Auto-fill via WhatsApp', 'Churn radar', 'Dashboard'], highlight: true },
-            { name: 'Studio Pro', price: 'R599', desc: 'per month', features: ['Up to 3 studios', 'Unlimited bookings', 'Priority WhatsApp', 'API access', 'Custom reports'], highlight: false },
-            { name: 'Enterprise', price: 'Custom', desc: 'For chains & franchises', features: ['Unlimited studios', 'White-label option', 'Dedicated support', 'Custom integrations'], highlight: false },
-          ].map((plan, i) => (
-            <motion.div key={i} whileHover={{ y: -4 }}
-              className="rounded-2xl p-7 transition-colors"
-              style={{
-                backgroundColor: plan.highlight ? C.green.wash : '#fff',
-                border: `1px solid ${plan.highlight ? C.green.light : C.border}`,
-              }}
-            >
-              <h3 className="text-base font-semibold" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>{plan.name}</h3>
-              <div className="mt-3 text-4xl font-bold" style={{ fontFamily: "'DM Serif Display', serif" }}>{plan.price}</div>
-              <p className="text-xs mt-1" style={{ color: C.muted }}>{plan.desc}</p>
-              <ul className="mt-6 space-y-3">
-                {plan.features.map((f, j) => (
-                  <li key={j} className="flex items-start gap-2.5 text-sm" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: C.green.deep }} />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link to="/login"
-                className="mt-8 block text-center py-3 rounded-full text-sm font-semibold transition-colors"
-                style={{
-                  backgroundColor: plan.highlight ? C.green.deep : 'transparent',
-                  color: plan.highlight ? '#fff' : C.text,
-                  border: plan.highlight ? 'none' : `1px solid ${C.border}`,
-                  fontFamily: "'DM Sans', sans-serif",
-                }}
-              >{plan.highlight ? 'Get Started' : 'Choose Plan'}</Link>
-            </motion.div>
-          ))}
-        </div>
-      </Section>
+      </SectionBg>
 
       {/* ── CTA ─────────────────────────────────────────── */}
-      <Section className="relative z-10 max-w-4xl mx-auto px-6 lg:px-12 py-24 text-center">
-        <h2 className="text-4xl lg:text-6xl leading-tight" style={{ fontFamily: "'DM Serif Display', serif" }}>
-          Ready to fill<br />every class?
-        </h2>
-        <p className="mt-5 text-lg" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>
-          Join South Africa's smartest yoga & pilates studios.
-        </p>
-        <Link to="/login"
-          className="group inline-flex items-center gap-2.5 mt-10 px-9 py-4 rounded-full text-lg font-semibold text-white transition-all hover:opacity-90"
-          style={{ backgroundColor: C.green.deep, fontFamily: "'DM Sans', sans-serif" }}
-        >Get started free <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" /></Link>
-      </Section>
+      <SectionBg>
+        <div className="max-w-[800px] mx-auto px-6 lg:px-10 py-24 lg:py-32 text-center">
+          <h2 className="text-[clamp(2rem,5vw,3.5rem)] leading-[1.08] tracking-[-0.02em]" style={{ fontFamily: font.display }}>
+            Ready to stop<br />losing revenue?
+          </h2>
+          <p className="mt-5 text-[16px]" style={{ color: C.t[500], fontFamily: font.body }}>
+            Join South Africa's smartest yoga & pilates studios.
+          </p>
+          <Link to="/login"
+            className="group inline-flex items-center gap-2 mt-10 px-8 py-4 rounded-full text-[15px] font-semibold text-white transition-all hover:shadow-xl hover:shadow-black/10 hover:-translate-y-0.5"
+            style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+          >Start free — no card needed <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" /></Link>
+        </div>
+      </SectionBg>
 
       {/* ── FOOTER ──────────────────────────────────────── */}
-      <footer className="relative z-10 border-t py-12 px-6" style={{ borderColor: C.border }}>
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+      <footer className="border-t py-10 px-6" style={{ borderColor: C.b }}>
+        <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" style={{ color: C.green.deep }} />
-            <span className="font-semibold" style={{ fontFamily: "'DM Serif Display', serif" }}>FillIQ</span>
+            <TrendingUp className="w-4 h-4" style={{ color: C.g[800] }} />
+            <span className="text-[14px] font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
           </div>
-          <p className="text-sm" style={{ color: C.muted, fontFamily: "'DM Sans', sans-serif" }}>Built for South African studios 🇿🇦</p>
+          <p className="text-[12px]" style={{ color: C.t[400], fontFamily: font.body }}>Built for South African studios 🇿🇦 · © 2026</p>
         </div>
       </footer>
+
+      {/* Marquee keyframes */}
+      <style>{`
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+      `}</style>
     </div>
+  )
+}
+
+/* ── Helpers ─────────────────────────────────────────── */
+function SectionBg({ children, id, style = {} }: { children: React.ReactNode; id?: string; style?: React.CSSProperties }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-80px' })
+  return (
+    <motion.section ref={ref} id={id} style={style}
+      initial={{ opacity: 0, y: 40 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+    >{children}</motion.section>
+  )
+}
+
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true, margin: '-40px' })
+  return (
+    <motion.div ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.5, delay, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+    >{children}</motion.div>
   )
 }
