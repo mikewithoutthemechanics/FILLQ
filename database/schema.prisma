@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")  // Used for migrations (non-pooled)
+}
+
+// ============================================
+// EXISTING TABLES (assumed from existing platform)
+// These are reference only - do not create migrations for these
+// ============================================
+
+model Member {
+  id                    String   @id @default(uuid())
+  email                 String   @unique
+  phone                 String
+  firstName             String
+  lastName              String
+  membershipType        String   // 'drop-in' | 'monthly' | 'annual' | 'class-pack'
+  membershipStatus      String   @default("active") // 'active' | 'inactive' | 'cancelled'
+  membershipExpiresAt   DateTime?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  // Relations to FillIQ tables
+  memberRiskScores      BookingRiskScore[] @relation("BookingRiskScores")
+  memberChurnSignals    MemberChurnSignal[] @relation("MemberChurnSignals")
+  memberFillEvents      WaitlistFillEvent[] @relation("FilledByMember")
+  memberPendingInvites  PendingInvite[] @relation("MemberPendingInvites")
+
+  @@map("members")
+}
+
+model Class {
+  id              String   @id @default(uuid())
+  name            String
+  classType       String   // 'yoga' | 'pilates' | 'barre' | 'reformer'
+  startTime       DateTime
+  endTime         DateTime
+  capacity        Int
+  availableSpots  Int
+  price           Decimal  @db.Decimal(10, 2)
+  teacherId       String
+  studioId        String
+  status          String   @default("scheduled") // 'scheduled' | 'cancelled' | 'completed'
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations to FillIQ tables
+  classRiskScores      BookingRiskScore[] @relation("ClassRiskScores")
+  classFillEvents      WaitlistFillEvent[] @relation("ClassFillEvents")
+  classPendingInvites  PendingInvite[] @relation("ClassPendingInvites")
+
+  @@map("classes")
+}
+
+model Booking {
+  id              String    @id @default(uuid())
+  memberId        String
+  classId         String
+  status          String    // 'confirmed' | 'cancelled' | 'no_show' | 'attended'
+  bookedAt        DateTime  @default(now())
+  cancelledAt     DateTime?
+  attendedAt      DateTime?
+  amountPaid      Decimal?  @db.Decimal(10, 2)
+  paymentStatus   String    @default("pending") // 'pending' | 'completed' | 'failed' | 'refunded'
+
+  @@map("bookings")
+}
+
+model WaitlistEntry {
+  id          String   @id @default(uuid())
+  classId     String
+  memberId    String
+  position    Int
+  createdAt   DateTime @default(now())
+  status      String   @default("waiting") // 'waiting' | 'invited' | 'filled' | 'expired'
+
+  @@map("waitlist_entries")
+}
+
+// ============================================
+// NEW FILLIQ TABLES
+// ============================================
+
+model BookingRiskScore {
+  id              String    @id @default(uuid())
+  bookingId       String
+  classId         String
+  memberId        String
+  riskScore       Int       // 0–100
+  riskFactors     Json      // full factor breakdown for debugging
+  atRisk          Boolean   @default(false)
+  scoredAt        DateTime  @default(now())
+  outcome         String?   // 'attended' | 'no_show' | 'cancelled'
+  outcomeRecordedAt DateTime?
+
+  bookingMember   Member    @relation("BookingRiskScores", fields: [memberId], references: [id])
+  bookingClass    Class     @relation("ClassRiskScores", fields: [classId], references: [id])
+
+  @@index([bookingId])
+  @@index([classId])
+  @@index([memberId])
+  @@index([scoredAt])
+  @@map("booking_risk_scores")
+}
+
+model WaitlistFillEvent {
+  id                    String    @id @default(uuid())
+  classId               String
+  triggeredByBookingId  String
+  triggeredAt           DateTime  @default(now())
+  invitesSent           Int       @default(0)
+  invitesResponded      Int       @default(0)
+  filled                Boolean   @default(false)
+  filledByMemberId      String?
+  fillTimeSeconds       Int?      // how long from trigger to fill
+  revenueRecovered      Decimal?  @db.Decimal(10, 2)
+  status                String    @default("active") // 'active' | 'filled' | 'expired' | 'cancelled'
+  completedAt           DateTime?
+
+  fillEventClass        Class     @relation("ClassFillEvents", fields: [classId], references: [id])
+  fillEventMember       Member?   @relation("FilledByMember", fields: [filledByMemberId], references: [id])
+
+  @@index([classId])
+  @@index([triggeredAt])
+  @@index([filled])
+  @@map("waitlist_fill_events")
+}
+
+model MemberChurnSignal {
+  id                      String    @id @default(uuid())
+  memberId                String
+  churnScore              Int       // 0–100
+  lastAttendanceDate      DateTime?
+  daysSinceLastBooking    Int
+  membershipType          String
+  membershipDaysRemaining Int?
+  attendanceRate30Days    Float?
+  attendanceRate90Days    Float?
+  missedClassesInRow      Int       @default(0)
+  hasOpenedAppLast14Days  Boolean   @default(true)
+  paymentFailures         Int       @default(0)
+  signalDate              DateTime  @default(now())
+  actionTaken             String?   // 'nudge_sent' | 'offer_sent' | 'ignored'
+  actionTakenAt           DateTime?
+  outcome                 String?   // 'retained' | 'churned' | 'pending'
+
+  churnMember             Member    @relation("MemberChurnSignals", fields: [memberId], references: [id])
+
+  @@index([memberId])
+  @@index([signalDate])
+  @@index([churnScore])
+  @@map("member_churn_signals")
+}
+
+model PendingInvite {
+  id          String    @id @default(uuid())
+  classId     String
+  memberId    String
+  phone       String
+  status      String    @default("sent") // 'sent' | 'responded' | 'taken' | 'expired'
+  sentAt      DateTime  @default(now())
+  respondedAt DateTime?
+  response    String?   // 'YES' | 'BOOK' | other
+  position    Int       // waitlist position when invited
+
+  inviteMember  Member    @relation("MemberPendingInvites", fields: [memberId], references: [id])
+  inviteClass   Class     @relation("ClassPendingInvites", fields: [classId], references: [id])
+
+  @@index([classId, status])
+  @@index([phone, status])
+  @@map("pending_invites")
+}
+
+model FillIQSettings {
+  id                        String   @id @default(uuid())
+  studioId                  String   @unique
+  
+  // Waitlist engine settings
+  maxSimultaneousInvites    Int      @default(3)
+  inviteExpiryMinutes       Int      @default(30)
+  autoExpandAfterMinutes    Int      @default(30)
+  autoFillEnabled           Boolean  @default(true)
+  
+  // Rebook nudge settings
+  rebookNudgeEnabled        Boolean  @default(true)
+  rebookNudgeDelayMinutes   Int      @default(45)
+  
+  // Churn settings
+  churnScoreThreshold       Int      @default(65)
+  autoNudgeThreshold        Int      @default(80)
+  autoNudgeEnabled          Boolean  @default(false)
+  churnNudgeCooldownDays    Int      @default(14)
+  
+  // WhatsApp settings (encrypted at rest)
+  wabaProvider              String   @default("360dialog") // '360dialog' | 'vonage'
+  wabaPhoneNumberId         String?
+  wabaAccessTokenEncrypted  String?
+  studioWhatsAppNumber      String?
+  
+  // Revenue settings
+  defaultClassPrice         Decimal  @default(150.00) @db.Decimal(10, 2)
+  
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@map("filliq_settings")
+}
+
+model WhatsAppTemplate {
+  id            String   @id @default(uuid())
+  studioId      String
+  name          String   // e.g., 'filiq_spot_available'
+  category      String   // 'UTILITY' | 'MARKETING'
+  language      String   @default("en")
+  status        String   @default("pending") // 'pending' | 'approved' | 'rejected'
+  templateId    String?  // WABA provider's template ID
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([studioId, name])
+  @@map("whatsapp_templates")
+}
+
+model RebookNudgeLog {
+  id              String   @id @default(uuid())
+  memberId        String
+  classId         String   // class attended
+  nudgedClassId   String   // class suggested for rebooking
+  sentAt          DateTime @default(now())
+  responded       Boolean  @default(false)
+  booked          Boolean  @default(false)
+  
+  @@index([memberId])
+  @@index([sentAt])
+  @@map("rebook_nudge_logs")
+}
+
+model MonthlyReport {
+  id                      String   @id @default(uuid())
+  studioId                String
+  year                    Int
+  month                   Int
+  revenueRecovered        Decimal  @default(0) @db.Decimal(10, 2)
+  spotsFilled             Int      @default(0)
+  avgFillTimeMinutes      Float?
+  churnsPrevented         Int      @default(0)
+  atRiskMembersFlagged    Int      @default(0)
+  nudgesSent              Int      @default(0)
+  rebookNudgesSent        Int      @default(0)
+  rebookNudgesConverted   Int      @default(0)
+  
+  @@unique([studioId, year, month])
+  @@map("monthly_reports")
+}

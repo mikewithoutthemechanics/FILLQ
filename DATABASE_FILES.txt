@@ -1,0 +1,163 @@
+═══════════════════════════════════════════════════════════════
+FILLIQ DATABASE FILES - EVERYTHING YOU NEED
+═══════════════════════════════════════════════════════════════
+
+📁 Location: C:\Users\Personal\Projects\FILLQ\database\
+
+───────────────────────────────────────────────────────────────
+1. MAIN SCHEMA FILE (MUST RUN THIS FIRST)
+───────────────────────────────────────────────────────────────
+
+File: database/supabase-schema.sql
+Size: ~14KB
+Purpose: Complete database schema for Supabase/PostgreSQL
+
+Contents:
+  ✓ All table definitions (13 tables)
+  ✓ Indexes for performance
+  ✓ RLS policies for security
+  ✓ Triggers for auto-updates
+  ✓ Views for analytics
+  ✓ Seed data for testing
+
+HOW TO RUN:
+  1. Go to Supabase Dashboard → SQL Editor
+  2. Copy entire contents of supabase-schema.sql
+  3. Paste and click "Run"
+  4. Done!
+
+───────────────────────────────────────────────────────────────
+2. SEED DATA FILE (OPTIONAL - FOR TESTING)
+───────────────────────────────────────────────────────────────
+
+File: database/seeds/seed-data.sql
+Size: ~11KB
+Purpose: Sample data for testing FillIQ
+
+Contents:
+  ✓ 5 test members
+  ✓ 6 test classes
+  ✓ 9 test bookings
+  ✓ 5 risk scores
+  ✓ 5 churn signals
+  ✓ 3 fill events
+  ✓ Test settings
+
+HOW TO RUN:
+  1. After running schema
+  2. Go to Supabase Dashboard → SQL Editor
+  3. Copy contents of seed-data.sql
+  4. Paste and click "Run"
+  5. Test data populated!
+
+───────────────────────────────────────────────────────────────
+3. PRISMA SCHEMA FILE
+───────────────────────────────────────────────────────────────
+
+File: database/schema.prisma
+Size: ~8KB
+Purpose: Prisma ORM configuration
+
+NOTE: For Supabase, use the SQL files above instead of Prisma Migrate.
+This file is for:
+  ✓ Generating Prisma Client
+  ✓ Type definitions
+  ✓ Local development
+
+COMMANDS:
+  cd backend
+  npx prisma generate --schema=../database/schema.prisma
+
+───────────────────────────────────────────────────────────────
+4. SETUP DOCUMENTATION
+───────────────────────────────────────────────────────────────
+
+File: DATABASE_SETUP.md
+Size: ~6KB
+Purpose: Complete setup guide
+
+Includes:
+  ✓ Supabase setup instructions
+  ✓ Local PostgreSQL setup
+  ✓ Common SQL queries
+  ✓ Troubleshooting guide
+  ✓ Backup/restore commands
+
+───────────────────────────────────────────────────────────────
+5. SUPABASE INTEGRATION GUIDE
+───────────────────────────────────────────────────────────────
+
+File: SUPABASE_SETUP.md
+Size: ~8KB
+Purpose: Supabase-specific integration
+
+Includes:
+  ✓ Why Supabase for FillIQ
+  ✓ Connection pooling setup
+  ✓ RLS configuration
+  ✓ Edge Functions (optional)
+  ✓ Real-time subscriptions
+  ✓ Auth integration
+
+───────────────────────────────────────────────────────────────
+TABLES CREATED (13 Total)
+───────────────────────────────────────────────────────────────
+
+EXISTING TABLES (from your platform):
+  • members          - Studio members
+  • classes          - Scheduled classes
+  • bookings         - Class bookings
+  • waitlist_entries - Waitlist queue
+
+NEW FILLIQ TABLES:
+  • booking_risk_scores      - No-show predictions
+  • waitlist_fill_events     - Auto-fill history
+  • member_churn_signals     - Churn predictions
+  • pending_invites          - WhatsApp invites
+  • filliq_settings          - Studio configuration
+  • whatsapp_templates       - Message templates
+  • rebook_nudge_logs        - Rebooking history
+  • monthly_reports          - Analytics
+  • studio_owners            - Auth accounts
+
+───────────────────────────────────────────────────────────────
+QUICK START COMMANDS
+───────────────────────────────────────────────────────────────
+
+OPTION 1: SUPABASE (RECOMMENDED)
+──────────────────────────────────
+1. Create project at https://app.supabase.com
+2. Go to SQL Editor
+3. Run: database/supabase-schema.sql
+4. (Optional) Run: database/seeds/seed-data.sql
+5. Get connection string from Settings → Database
+6. Update backend/.env with DATABASE_URL
+
+OPTION 2: LOCAL POSTGRES
+──────────────────────────────────
+1. Install PostgreSQL 14+
+2. createdb filliq
+3. psql -d filliq -f database/supabase-schema.sql
+4. psql -d filliq -f database/seeds/seed-data.sql
+5. Update backend/.env: DATABASE_URL="postgresql://localhost:5432/filliq"
+
+───────────────────────────────────────────────────────────────
+ENVIRONMENT VARIABLES NEEDED
+───────────────────────────────────────────────────────────────
+
+For Supabase:
+  DATABASE_URL="postgresql://postgres.[REF]:[PASS]@aws-0-[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"
+  DIRECT_URL="postgresql://postgres:[PASS]@db.[REF].supabase.co:5432/postgres"
+
+For Local PostgreSQL:
+  DATABASE_URL="postgresql://postgres:password@localhost:5432/filliq"
+
+───────────────────────────────────────────────────────────────
+NEED HELP?
+───────────────────────────────────────────────────────────────
+
+  • Read DATABASE_SETUP.md for detailed instructions
+  • Read SUPABASE_SETUP.md for Supabase-specific help
+  • Check README.md for project overview
+
+═══════════════════════════════════════════════════════════════
