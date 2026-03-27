@@ -1,8 +1,17 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { TrendingUp, Mail, Lock, Eye, EyeOff, ArrowRight, Sparkles } from 'lucide-react'
+import { TrendingUp, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
 import { supabase } from '../hooks/useSupabase'
+
+const C = {
+  g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
+  r: { 700: '#6B1D1D', 600: '#8B3A3A' },
+  t: { 900: '#0F0F0F', 700: '#2D2D2D', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
+  b: '#E5E5E5',
+  w: '#FAFAF8',
+}
+const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
 
 export default function Login() {
   const navigate = useNavigate()
@@ -17,12 +26,11 @@ export default function Login() {
     e.preventDefault()
     setLoading(true)
     setError('')
-
     try {
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({ email, password })
         if (error) throw error
-        setError('Check your email for confirmation link!')
+        setError('Check your email for a confirmation link.')
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password })
         if (error) throw error
@@ -36,164 +44,184 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white flex">
-      {/* Animated background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute top-1/4 left-1/3 w-96 h-96 bg-violet-600/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-fuchsia-600/15 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1.5s' }} />
-      </div>
+    <div className="min-h-screen flex" style={{ backgroundColor: C.w, color: C.t[900] }}>
 
-      {/* Left side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 relative z-10 flex-col justify-between p-12 bg-gradient-to-br from-violet-900/30 to-fuchsia-900/20">
-        <div>
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold">FillIQ</span>
-          </Link>
+      {/* ── Left panel ─────────────────────────────────── */}
+      <div className="hidden lg:flex lg:w-[48%] relative overflow-hidden" style={{ backgroundColor: C.g[800] }}>
+        {/* Ambient shapes */}
+        <div className="absolute inset-0">
+          <div className="absolute w-[500px] h-[500px] rounded-full -top-20 -left-20 opacity-10"
+            style={{ background: `radial-gradient(circle, ${C.g[400]}, transparent 70%)` }} />
+          <div className="absolute w-[400px] h-[400px] rounded-full bottom-0 right-0 opacity-10"
+            style={{ background: `radial-gradient(circle, ${C.r[600]}, transparent 70%)` }} />
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="max-w-md"
-        >
-          <h1 className="text-4xl font-extrabold leading-tight mb-6">
-            Your classes deserve to be{' '}
-            <span className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-transparent">
-              full.
-            </span>
-          </h1>
-          <p className="text-gray-400 text-lg leading-relaxed">
-            AI-powered no-show prevention that works while you sleep. Predict, fill, retain.
-          </p>
-
-          <div className="mt-10 flex items-center gap-4">
-            <div className="flex -space-x-2">
-              {['bg-violet-500', 'bg-fuchsia-500', 'bg-cyan-500'].map((bg, i) => (
-                <div key={i} className={`w-8 h-8 ${bg} rounded-full border-2 border-gray-950`} />
-              ))}
+        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
+          {/* Logo */}
+          <Link to="/landing" className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur">
+              <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <p className="text-sm text-gray-500">Join 50+ SA studios</p>
-          </div>
-        </motion.div>
-
-        <p className="text-sm text-gray-600">© 2026 FillIQ. Built in South Africa 🇿🇦</p>
-      </div>
-
-      {/* Right side - Form */}
-      <div className="w-full lg:w-1/2 relative z-10 flex items-center justify-center p-8">
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.6 }}
-          className="w-full max-w-md"
-        >
-          {/* Mobile logo */}
-          <Link to="/" className="lg:hidden flex items-center gap-2 mb-10">
-            <div className="w-10 h-10 bg-gradient-to-br from-violet-500 to-fuchsia-600 rounded-xl flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-white" />
-            </div>
-            <span className="text-2xl font-bold">FillIQ</span>
+            <span className="text-lg font-semibold text-white" style={{ fontFamily: font.display }}>FillIQ</span>
           </Link>
 
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-5 h-5 text-violet-400" />
-            <span className="text-sm text-violet-400 font-medium">Welcome</span>
-          </div>
-          <h2 className="text-3xl font-bold mb-2">
-            {isSignUp ? 'Create your account' : 'Sign in to FillIQ'}
+          {/* Hero text */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="max-w-md"
+          >
+            <h1 className="text-[2.8rem] leading-[1.08] text-white" style={{ fontFamily: font.display }}>
+              Your classes<br />deserve to be<br />
+              <span style={{ color: C.g[200] }}>full.</span>
+            </h1>
+            <p className="mt-6 text-[15px] leading-relaxed text-white/60" style={{ fontFamily: font.body }}>
+              AI-powered no-show prevention that works while you sleep. Predict, fill, retain.
+            </p>
+            <div className="mt-8 flex items-center gap-4">
+              <div className="flex -space-x-2">
+                {['#fff', '#D4E4C8', '#C47A7A'].map((bg, i) => (
+                  <div key={i} className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-bold"
+                    style={{ backgroundColor: bg, borderColor: C.g[800], color: C.g[900] }}
+                  >{['SJ','MS','EW'][i]}</div>
+                ))}
+              </div>
+              <p className="text-[12px] text-white/40">50+ SA studios</p>
+            </div>
+          </motion.div>
+
+          {/* Footer */}
+          <p className="text-[12px] text-white/30" style={{ fontFamily: font.body }}>© 2026 FillIQ · Built in South Africa 🇿🇦</p>
+        </div>
+      </div>
+
+      {/* ── Right panel — form ─────────────────────────── */}
+      <div className="w-full lg:w-[52%] flex items-center justify-center p-8">
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="w-full max-w-[400px]"
+        >
+          {/* Mobile logo */}
+          <Link to="/landing" className="lg:hidden flex items-center gap-2 mb-10">
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: C.g[800] }}>
+              <TrendingUp className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-lg font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
+          </Link>
+
+          <p className="text-[12px] font-medium tracking-[0.08em] uppercase mb-2" style={{ color: C.g[700], fontFamily: font.body }}>
+            {isSignUp ? 'Create account' : 'Welcome back'}
+          </p>
+          <h2 className="text-[28px] font-bold leading-tight" style={{ fontFamily: font.display }}>
+            {isSignUp ? 'Start recovering revenue' : 'Sign in to FillIQ'}
           </h2>
-          <p className="text-gray-400 mb-8">
-            {isSignUp ? 'Start recovering revenue today' : 'Welcome back — let\'s fill some classes'}
+          <p className="mt-2 text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
+            {isSignUp ? 'Free to start. No card needed.' : 'Let\'s fill some classes.'}
           </p>
 
+          {/* Error / success */}
           {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-red-400 text-sm"
-            >
-              {error}
-            </motion.div>
+            <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+              className="mt-5 p-3.5 rounded-xl text-[13px]"
+              style={{
+                backgroundColor: error.includes('email') ? C.g[50] : '#FDF2F2',
+                border: `1px solid ${error.includes('email') ? C.g[200] : '#F5C6C6'}`,
+                color: error.includes('email') ? C.g[800] : C.r[700],
+                fontFamily: font.body,
+              }}
+            >{error}</motion.div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
+              <label className="block text-[13px] font-medium mb-1.5" style={{ color: C.t[700], fontFamily: font.body }}>Email</label>
               <div className="relative">
-                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: C.t[300] }} />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} required
                   placeholder="you@studio.com"
-                  required
-                  className="w-full pl-12 pr-4 py-4 bg-gray-900/50 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  className="w-full pl-11 pr-4 py-3.5 rounded-xl text-[14px] outline-none transition-all"
+                  style={{
+                    backgroundColor: '#fff',
+                    border: `1.5px solid ${C.b}`,
+                    fontFamily: font.body,
+                  }}
+                  onFocus={e => e.target.style.borderColor = C.g[600]}
+                  onBlur={e => e.target.style.borderColor = C.b}
                 />
               </div>
             </div>
 
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Password</label>
+              <label className="block text-[13px] font-medium mb-1.5" style={{ color: C.t[700], fontFamily: font.body }}>Password</label>
               <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-[18px] h-[18px]" style={{ color: C.t[300] }} />
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required
                   placeholder="••••••••"
-                  required
-                  className="w-full pl-12 pr-12 py-4 bg-gray-900/50 border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all"
+                  className="w-full pl-11 pr-11 py-3.5 rounded-xl text-[14px] outline-none transition-all"
+                  style={{
+                    backgroundColor: '#fff',
+                    border: `1.5px solid ${C.b}`,
+                    fontFamily: font.body,
+                  }}
+                  onFocus={e => e.target.style.borderColor = C.g[600]}
+                  onBlur={e => e.target.style.borderColor = C.b}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: C.t[300] }}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
                 </button>
               </div>
             </div>
 
+            {/* Forgot */}
             {!isSignUp && (
               <div className="flex justify-end">
-                <button type="button" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
+                <button type="button" className="text-[12px] transition-colors" style={{ color: C.g[700], fontFamily: font.body }}>
                   Forgot password?
                 </button>
               </div>
             )}
 
-            <motion.button
-              type="submit"
-              disabled={loading}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full flex items-center justify-center gap-3 py-4 bg-gradient-to-r from-violet-600 to-fuchsia-600 rounded-xl text-lg font-bold hover:shadow-lg hover:shadow-violet-500/25 transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+            {/* Submit */}
+            <motion.button type="submit" disabled={loading}
+              whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}
+              className="w-full flex items-center justify-center gap-2 py-3.5 rounded-xl text-[14px] font-semibold text-white transition-all disabled:opacity-50"
+              style={{ backgroundColor: C.g[800], fontFamily: font.body }}
             >
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
                 <>
                   {isSignUp ? 'Create Account' : 'Sign In'}
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-4 h-4" />
                 </>
               )}
             </motion.button>
           </form>
 
-          <div className="mt-8 text-center">
-            <p className="text-gray-400">
+          {/* Toggle */}
+          <div className="mt-6 text-center">
+            <p className="text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
               {isSignUp ? 'Already have an account?' : 'Don\'t have an account?'}{' '}
-              <button
-                onClick={() => { setIsSignUp(!isSignUp); setError('') }}
-                className="text-violet-400 font-semibold hover:text-violet-300 transition-colors"
-              >
-                {isSignUp ? 'Sign In' : 'Sign Up Free'}
-              </button>
+              <button onClick={() => { setIsSignUp(!isSignUp); setError('') }}
+                className="font-semibold transition-colors"
+                style={{ color: C.g[800], fontFamily: font.body }}
+              >{isSignUp ? 'Sign in' : 'Sign up free'}</button>
             </p>
+          </div>
+
+          {/* Back to landing */}
+          <div className="mt-8 text-center">
+            <Link to="/landing" className="text-[12px] transition-colors" style={{ color: C.t[400], fontFamily: font.body }}>
+              ← Back to home
+            </Link>
           </div>
         </motion.div>
       </div>
