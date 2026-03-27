@@ -1,0 +1,29 @@
+[functions.score-bookings]
+verify_jwt = false
+
+[functions.waitlist-trigger]
+verify_jwt = false
+
+[functions.churn-score]
+verify_jwt = false
+
+[functions.rebook-nudge]
+verify_jwt = false
+
+[functions.whatsapp-webhook]
+verify_jwt = false
+
+[functions.dashboard-api]
+verify_jwt = false
+
+[functions.scores-api]
+verify_jwt = false
+
+[functions.waitlist-api]
+verify_jwt = false
+
+[functions.churn-api]
+verify_jwt = false
+
+[functions.settings-api]
+verify_jwt = false
