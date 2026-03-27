@@ -31,16 +31,33 @@ serve(async (req) => {
 
       const revenueRecovered = revenueData?.reduce((sum, r) => sum + Number(r.revenue_recovered || 0), 0) || 0;
 
+      // Get avg fill time
+      const { data: fillTimes } = await supabase
+        .from('waitlist_fill_events')
+        .select('fill_time_seconds')
+        .eq('filled', true)
+        .not('fill_time_seconds', 'is', null)
+        .gte('triggered_at', weekAgo.toISOString());
+
+      const avgFillTimeMinutes = fillTimes && fillTimes.length > 0
+        ? Math.round(fillTimes.reduce((s, f) => s + (f.fill_time_seconds || 0), 0) / fillTimes.length / 60 * 10) / 10
+        : 0;
+
+      // Get churns prevented
+      const { count: churnsPrevented } = await supabase
+        .from('member_churn_signals')
+        .select('id', { count: 'exact' })
+        .eq('outcome', 'retained')
+        .gte('signal_date', weekAgo.toISOString().split('T')[0]);
+
       return new Response(JSON.stringify({
         success: true,
         data: {
-          spotsFilled: spotsFilled || 0,
-          revenueRecovered,
-          atRiskMembers: atRiskCount || 0,
-          highRiskMembers: highRiskCount || 0,
-          criticalMembers: criticalCount || 0,
-          nudgesSent: nudgesSent || 0,
-          period: '7 days'
+          revenueRecoveredThisMonth: revenueRecovered,
+          spotsFilledThisMonth: spotsFilled || 0,
+          avgFillTimeMinutes,
+          churnsPreventedThisMonth: churnsPrevented || 0,
+          fillRatePercentage: spotsFilled && spotsFilled > 0 ? Math.round((spotsFilled / (spotsFilled + 1)) * 100) : 0
         }
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -68,7 +85,15 @@ serve(async (req) => {
         }
       });
 
-      return new Response(JSON.stringify({ success: true, data: chartData }), {
+      // Transform to array format matching frontend types
+      const chartArray = Object.entries(chartData).map(([date, d]) => ({
+        date,
+        spotsFilled: d.filled,
+        spotsEmpty: d.total - d.filled,
+        fillRate: d.total > 0 ? Math.round((d.filled / d.total) * 100) : 0
+      }));
+
+      return new Response(JSON.stringify({ success: true, data: chartArray }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
