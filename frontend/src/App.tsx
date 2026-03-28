@@ -29,7 +29,7 @@ const C = {
 const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
 
 function isOnboarded() {
-  return localStorage.getItem('waitup_onboarded') === 'true'
+  return localStorage.getItem('filliq_onboarded') === 'true'
 }
 
 function ProtectedRoute({ children, requireOnboarding = true }: { children: React.ReactNode; requireOnboarding?: boolean }) {
@@ -61,7 +61,7 @@ function ProtectedRoute({ children, requireOnboarding = true }: { children: Reac
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth()
-  const studioName = localStorage.getItem('waitup_studio_name') || 'Studio'
+  const studioName = localStorage.getItem('filliq_studio_name') || 'Studio'
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: C.w }}>

@@ -91,11 +91,11 @@ export default function Tour() {
 
   const handleConnect = async () => {
     setConnecting(true)
-    const studioId = localStorage.getItem('waitup_studio_id')
+    const studioId = localStorage.getItem('filliq_studio_id')
 
     if (selectedIntegration === 'google_sheets') {
       // Store Google Sheets config
-      await supabase.from('waitup_settings').update({
+      await supabase.from('filliq_settings').update({
         waba_provider: 'google_sheets',
         waba_phone_number_id: apiUrl, // Reuse field for sheet URL
       }).eq('studio_id', studioId || 'default-studio')
@@ -118,13 +118,13 @@ export default function Tour() {
       return // Don't set connected yet — user needs to scan QR
     } else {
       // API-based integration
-      await supabase.from('waitup_settings').update({
+      await supabase.from('filliq_settings').update({
         waba_provider: selectedIntegration,
         waba_access_token_encrypted: apiKey || null,
       }).eq('studio_id', studioId || 'default-studio')
     }
 
-    localStorage.setItem('waitup_integration', selectedIntegration || '')
+    localStorage.setItem('filliq_integration', selectedIntegration || '')
     setConnecting(false)
     setConnected(true)
   }

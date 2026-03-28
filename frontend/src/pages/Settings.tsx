@@ -88,16 +88,16 @@ export default function SettingsPage() {
   }, [])
 
   const loadSettings = async () => {
-    const studioId = localStorage.getItem('waitup_studio_id') || 'default-studio'
-    const { data } = await supabase.from('waitup_settings').select('*').eq('studio_id', studioId).single()
+    const studioId = localStorage.getItem('filliq_studio_id') || 'default-studio'
+    const { data } = await supabase.from('filliq_settings').select('*').eq('studio_id', studioId).single()
     if (data) setSettings(data)
     setLoading(false)
   }
 
   const handleSave = async () => {
     setSaving(true)
-    const studioId = localStorage.getItem('waitup_studio_id') || 'default-studio'
-    await supabase.from('waitup_settings').update(settings).eq('studio_id', studioId)
+    const studioId = localStorage.getItem('filliq_studio_id') || 'default-studio'
+    await supabase.from('filliq_settings').update(settings).eq('studio_id', studioId)
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 3000)
@@ -133,7 +133,7 @@ export default function SettingsPage() {
 
       {/* Studio */}
       <Card icon={Building2} title="Studio" desc="Your business details" color={C.g[800]}>
-        <Input label="Studio name" value={localStorage.getItem('waitup_studio_name') || ''} onChange={() => {}} placeholder="Your studio" />
+        <Input label="Studio name" value={localStorage.getItem('filliq_studio_name') || ''} onChange={() => {}} placeholder="Your studio" />
         <Input label="Default class price (ZAR)" value={settings.default_class_price || 150} onChange={(v) => update('default_class_price', v)} type="number" />
       </Card>
 

@@ -52,7 +52,7 @@ export default function Onboarding() {
       const { data: { user } } = await supabase.auth.getUser()
 
       // Create studio settings
-      await supabase.from('waitup_settings').upsert({
+      await supabase.from('filliq_settings').upsert({
         studio_id: studioId,
         default_class_price: parseFloat(defaultPrice) || 150,
         auto_fill_enabled: true,
@@ -71,9 +71,9 @@ export default function Onboarding() {
       }
 
       // Store studio ID in localStorage for the session
-      localStorage.setItem('waitup_studio_id', studioId)
-      localStorage.setItem('waitup_studio_name', studioName)
-      localStorage.setItem('waitup_onboarded', 'true')
+      localStorage.setItem('filliq_studio_id', studioId)
+      localStorage.setItem('filliq_studio_name', studioName)
+      localStorage.setItem('filliq_onboarded', 'true')
 
       setStep(3)
     } catch (err) {
