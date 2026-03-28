@@ -465,7 +465,7 @@ export default function Landing() {
       <SectionBg id="pricing" style={{ backgroundColor: '#fff' }}>
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
           <p className="text-[12px] font-medium uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body, letterSpacing: '0.15em' }}>Pricing</p>
-          <h2 className="text-[clamp(2.2rem,4.5vw,3.5rem)] leading-[1.08] max-w-lg" style={{ fontFamily: font.display, letterSpacing: '-0.025em' }}>
+          <h2 className="text-[clamp(2.2rem,4.5vw,3.5rem)] leading-[1.08] max-w-lg" style={{ fontFamily: font.display, letterSpacing: '0.04em' }}>
             Simple plans for a<br /><span style={{ color: C.g[700] }}>full studio</span>
           </h2>
 
