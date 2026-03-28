@@ -12,7 +12,7 @@ import { supabase } from '../hooks/useSupabase'
 
 const C = {
   g: { 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  r: { 700: '#6B1D1D' },
+  a: { 700: '#8B6914' },
   t: { 900: '#0F0F0F', 700: '#2D2D2D', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -151,7 +151,7 @@ export default function SettingsPage() {
       </Card>
 
       {/* Churn */}
-      <Card icon={Shield} title="Churn Prevention" desc="Member retention" color={C.r[700]}>
+      <Card icon={Shield} title="Churn Prevention" desc="Member retention" color={C.a[700]}>
         <Input label="Churn threshold" desc="Score to flag as at-risk (0-100)" value={settings.churn_score_threshold || 65} onChange={(v) => update('churn_score_threshold', v)} type="number" />
         <Toggle label="Auto-nudge" desc="Auto-send to highest-risk members" checked={settings.auto_nudge_enabled ?? false} onChange={(v) => update('auto_nudge_enabled', v)} />
         <Input label="Nudge cooldown (days)" desc="Between nudges to same member" value={settings.churn_nudge_cooldown_days || 14} onChange={(v) => update('churn_nudge_cooldown_days', v)} type="number" />

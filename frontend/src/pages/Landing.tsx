@@ -22,7 +22,7 @@ import TextRotate from '../components/TextRotate'
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 500: '#5E9A34', 400: '#8BAA6B', 300: '#B5CDA3', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  r: { 900: '#3D1212', 800: '#5C1E1E', 700: '#6B1D1D', 600: '#8B3A3A', 500: '#A85454', 400: '#C47A7A' },
+  a: { 700: '#8B6914', 600: '#B8860B', 500: '#D4A520', 400: '#E0C068', 100: '#FFF5E0' },
   t: { 900: '#0F0F0F', 800: '#1A1A1A', 700: '#2D2D2D', 600: '#4A4A4A', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -143,9 +143,9 @@ export default function Landing() {
               <div className="flex -space-x-2">
                 {[
                   { bg: C.g[800], label: 'SJ' },
-                  { bg: C.r[700], label: 'MS' },
+                  { bg: C.a[700], label: 'MS' },
                   { bg: C.g[600], label: 'EW' },
-                  { bg: C.r[500], label: 'LD' },
+                  { bg: C.a[500], label: 'LD' },
                 ].map((a, i) => (
                   <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2"
                     style={{ backgroundColor: a.bg, borderColor: C.w }}
@@ -154,7 +154,7 @@ export default function Landing() {
               </div>
               <div className="h-5 w-px" style={{ background: C.b }} />
               <div>
-                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5" style={{ color: C.r[600], fill: C.r[600] }} />)}</div>
+                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5" style={{ color: C.a[600], fill: C.a[600] }} />)}</div>
                 <p className="text-[12px] mt-0.5" style={{ color: C.t[400], fontFamily: font.body }}>50+ studios across South Africa</p>
               </div>
             </motion.div>
@@ -197,9 +197,9 @@ export default function Landing() {
                 <div className="grid grid-cols-2 gap-2.5 mb-4">
                   {[
                     { icon: <BarChart3 className="w-3.5 h-3.5" />, v: 'R4,320', l: 'Recovered', c: C.g[800], bg: C.g[50] },
-                    { icon: <Users className="w-3.5 h-3.5" />, v: '18', l: 'Spots filled', c: C.r[700], bg: '#FDF2F2' },
+                    { icon: <Users className="w-3.5 h-3.5" />, v: '18', l: 'Spots filled', c: C.a[700], bg: '#FDF2F2' },
                     { icon: <Zap className="w-3.5 h-3.5" />, v: '86%', l: 'Fill rate', c: C.g[700], bg: C.g[50] },
-                    { icon: <Heart className="w-3.5 h-3.5" />, v: '3', l: 'Churns saved', c: C.r[600], bg: '#FDF2F2' },
+                    { icon: <Heart className="w-3.5 h-3.5" />, v: '3', l: 'Churns saved', c: C.a[600], bg: '#FDF2F2' },
                   ].map((card, i) => (
                     <motion.div key={i}
                       initial={{ opacity: 0, y: 8 }}
@@ -234,7 +234,7 @@ export default function Landing() {
                 <div className="space-y-2">
                   {[
                     { t: 'Spot filled: Morning Yoga Flow', time: '8 min ago', c: C.g[800], dot: C.g[600] },
-                    { t: 'Risk alert: Emma W. (score 85)', time: '23 min ago', c: C.r[700], dot: C.r[600] },
+                    { t: 'Risk alert: Emma W. (score 85)', time: '23 min ago', c: C.a[700], dot: C.a[600] },
                     { t: 'Rebook nudge sent to Mike S.', time: '1 hr ago', c: C.t[600], dot: C.t[300] },
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < 2 ? `1px solid ${C.b}` : 'none' }}>
@@ -246,33 +246,6 @@ export default function Landing() {
                 </div>
               </div>
             </div>
-
-            {/* Floating badge — risk */}
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.6 }}
-              className="absolute -left-4 top-8 rounded-xl px-3.5 py-2.5 shadow-lg shadow-black/10"
-              style={{ backgroundColor: C.r[700] }}
-            >
-              <p className="text-[11px] font-bold text-white">⚠ No-show risk: 85</p>
-              <p className="text-[10px] text-white/70">Emma Williams — drop-in</p>
-            </motion.div>
-
-            {/* Floating badge — whatsapp */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 1.8 }}
-              className="absolute -right-3 bottom-6 rounded-xl px-3.5 py-2.5 shadow-lg shadow-black/10 flex items-center gap-2.5"
-              style={{ backgroundColor: C.g[800] }}
-            >
-              <MessageCircle className="w-4 h-4 text-white" />
-              <div className="text-white">
-                <p className="text-[11px] font-bold">Spot filled ✓</p>
-                <p className="text-[10px] opacity-70">Sarah replied in 4 min</p>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </section>
@@ -311,7 +284,7 @@ export default function Landing() {
           <div className="mt-16 grid md:grid-cols-3 gap-10">
             {[
               { n: '01', icon: <Zap className="w-5 h-5" />, title: 'Predict', desc: 'Every booking gets a 0-100 no-show risk score. You know who\'s flaking 3 hours before class.', color: C.g[800] },
-              { n: '02', icon: <MessageCircle className="w-5 h-5" />, title: 'Auto-Fill', desc: 'Spot cancelled? WhatsApp fires instantly to your top 3 waitlist candidates. First reply gets it.', color: C.r[700] },
+              { n: '02', icon: <MessageCircle className="w-5 h-5" />, title: 'Auto-Fill', desc: 'Spot cancelled? WhatsApp fires instantly to your top 3 waitlist candidates. First reply gets it.', color: C.a[700] },
               { n: '03', icon: <Shield className="w-5 h-5" />, title: 'Retain', desc: 'Churn radar catches members drifting away. Auto-nudges and rebook invites keep them active.', color: C.g[700] },
             ].map((step, i) => (
               <Reveal key={i} delay={i * 0.12}>
@@ -336,7 +309,7 @@ export default function Landing() {
               <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>The product</p>
               <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]" style={{ fontFamily: font.display }}>
                 Not just a dashboard.<br />
-                <span style={{ color: C.r[700] }}>A recovery engine.</span>
+                <span style={{ color: C.a[700] }}>A recovery engine.</span>
               </h2>
               <p className="mt-5 text-[15px] leading-[1.7] max-w-md" style={{ color: C.t[500], fontFamily: font.body }}>
                 WaitUp runs silently in the background. It scores, it fills, it nudges. You just see the revenue coming back.
@@ -371,7 +344,7 @@ export default function Landing() {
 
                   {[
                     { time: '6:00 AM', event: 'Class scored — 2 at-risk bookings', badge: 'Scored', badgeColor: C.g[800] },
-                    { time: '6:45 AM', event: 'Sarah cancelled — WhatsApp fired', badge: 'Filled', badgeColor: C.r[700] },
+                    { time: '6:45 AM', event: 'Sarah cancelled — WhatsApp fired', badge: 'Filled', badgeColor: C.a[700] },
                     { time: '6:49 AM', event: 'Mike replied YES — spot confirmed', badge: 'Booked', badgeColor: C.g[700] },
                     { time: '7:00 AM', event: 'Class starts — full capacity ✓', badge: 'Full', badgeColor: C.g[600] },
                   ].map((item, i) => (

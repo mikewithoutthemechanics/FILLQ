@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 
 const C = {
   g: { 800: '#2D5016', 700: '#3D6B22', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  r: { 700: '#6B1D1D', 600: '#8B3A3A' },
+  a: { 700: '#8B6914', 600: '#B8860B' },
 }
 
 interface TextRotateProps {
@@ -33,7 +33,7 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
           className="inline-block px-3 py-1 rounded-lg"
           style={{
-            backgroundColor: C.r[700],
+            backgroundColor: C.a[700],
             color: '#fff',
           }}
         >

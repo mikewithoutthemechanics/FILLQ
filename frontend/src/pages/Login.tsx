@@ -6,7 +6,7 @@ import { supabase } from '../hooks/useSupabase'
 
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  r: { 700: '#6B1D1D', 600: '#8B3A3A' },
+  a: { 700: '#8B6914', 600: '#B8860B' },
   t: { 900: '#0F0F0F', 700: '#2D2D2D', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -53,7 +53,7 @@ export default function Login() {
           <div className="absolute w-[500px] h-[500px] rounded-full -top-20 -left-20 opacity-10"
             style={{ background: `radial-gradient(circle, ${C.g[400]}, transparent 70%)` }} />
           <div className="absolute w-[400px] h-[400px] rounded-full bottom-0 right-0 opacity-10"
-            style={{ background: `radial-gradient(circle, ${C.r[600]}, transparent 70%)` }} />
+            style={{ background: `radial-gradient(circle, ${C.a[600]}, transparent 70%)` }} />
         </div>
 
         <div className="relative z-10 flex flex-col justify-between p-12 w-full">
@@ -81,7 +81,7 @@ export default function Login() {
             </p>
             <div className="mt-8 flex items-center gap-4">
               <div className="flex -space-x-2">
-                {['#fff', '#D4E4C8', '#C47A7A'].map((bg, i) => (
+                {['#fff', '#D4E4C8', '#E0C068'].map((bg, i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-bold"
                     style={{ backgroundColor: bg, borderColor: C.g[800], color: C.g[900] }}
                   >{['SJ','MS','EW'][i]}</div>
@@ -129,7 +129,7 @@ export default function Login() {
               style={{
                 backgroundColor: error.includes('email') ? C.g[50] : '#FDF2F2',
                 border: `1px solid ${error.includes('email') ? C.g[200] : '#F5C6C6'}`,
-                color: error.includes('email') ? C.g[800] : C.r[700],
+                color: error.includes('email') ? C.g[800] : C.a[700],
                 fontFamily: font.body,
               }}
             >{error}</motion.div>
