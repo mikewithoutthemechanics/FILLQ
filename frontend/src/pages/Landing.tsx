@@ -16,7 +16,9 @@ import {
   BarChart3,
   Heart
 } from 'lucide-react'
+import CylindricalCarousel from '../components/CylindricalCarousel'
 import TextRotate from '../components/TextRotate'
+import HolographicCard from '../components/HolographicCard'
 
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
@@ -403,39 +405,36 @@ export default function Landing() {
               { name: 'Enterprise', price: 'Custom', desc: 'Chains & franchises', features: ['Unlimited studios', 'White-label', 'Dedicated support', 'Custom integrations'], hl: false, cta: 'Contact Us' },
             ].map((plan, i) => (
               <Reveal key={i} delay={i * 0.08}>
-                <div className="rounded-[1.25rem] p-7 h-full flex flex-col transition-all hover:shadow-lg"
-                  style={{
-                    backgroundColor: plan.hl ? C.g[800] : '#fff',
-                    border: plan.hl ? 'none' : `1.5px solid ${C.b}`,
-                    color: plan.hl ? '#fff' : C.t[900],
-                    boxShadow: plan.hl ? '0 8px 32px rgba(45,80,22,0.2)' : 'none',
-                  }}
-                >
-                  <p className="text-[11px] font-semibold uppercase" style={{ color: plan.hl ? 'rgba(255,255,255,0.6)' : C.t[400], fontFamily: font.body, letterSpacing: '0.1em' }}>{plan.name}</p>
-                  <div className="mt-3 flex items-baseline gap-1">
-                    <span className="text-[36px] font-bold leading-none" style={{ fontFamily: font.display }}>{plan.price}</span>
-                    {plan.price !== 'Free' && plan.price !== 'Custom' && <span className="text-[13px]" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>{plan.desc}</span>}
+                <HolographicCard highlighted={plan.hl}>
+                  <div className="p-7 h-full flex flex-col"
+                    style={{ color: plan.hl ? '#fff' : C.t[900] }}
+                  >
+                    <p className="text-[11px] font-semibold uppercase" style={{ color: plan.hl ? 'rgba(255,255,255,0.6)' : C.t[400], fontFamily: font.body, letterSpacing: '0.1em' }}>{plan.name}</p>
+                    <div className="mt-3 flex items-baseline gap-1">
+                      <span className="text-[36px] font-bold leading-none" style={{ fontFamily: font.display }}>{plan.price}</span>
+                      {plan.price !== 'Free' && plan.price !== 'Custom' && <span className="text-[13px]" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>{plan.desc}</span>}
+                    </div>
+                    {plan.price === 'Free' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>No card needed</p>}
+                    {plan.price === 'Custom' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>Let's talk</p>}
+                    <ul className="mt-6 space-y-3 flex-1">
+                      {plan.features.map((f, j) => (
+                        <li key={j} className="flex items-start gap-2.5 text-[13px]" style={{ fontFamily: font.body }}>
+                          <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: plan.hl ? 'rgba(255,255,255,0.7)' : C.g[700] }} />
+                          {f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Link to="/login"
+                      className="mt-7 block text-center py-3 rounded-xl text-[14px] font-semibold transition-all hover:shadow-md"
+                      style={{
+                        backgroundColor: plan.hl ? '#fff' : C.g[50],
+                        color: plan.hl ? C.g[900] : C.g[800],
+                        border: plan.hl ? 'none' : `1.5px solid ${C.g[200]}`,
+                        fontFamily: font.body,
+                      }}
+                    >{plan.cta}</Link>
                   </div>
-                  {plan.price === 'Free' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>No card needed</p>}
-                  {plan.price === 'Custom' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>Let's talk</p>}
-                  <ul className="mt-6 space-y-3 flex-1">
-                    {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2.5 text-[13px]" style={{ fontFamily: font.body }}>
-                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: plan.hl ? 'rgba(255,255,255,0.7)' : C.g[700] }} />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                  <Link to="/login"
-                    className="mt-7 block text-center py-3 rounded-xl text-[14px] font-semibold transition-all hover:shadow-md"
-                    style={{
-                      backgroundColor: plan.hl ? '#fff' : C.g[50],
-                      color: plan.hl ? C.g[900] : C.g[800],
-                      border: plan.hl ? 'none' : `1.5px solid ${C.g[200]}`,
-                      fontFamily: font.body,
-                    }}
-                  >{plan.cta}</Link>
-                </div>
+                </HolographicCard>
               </Reveal>
             ))}
           </div>
