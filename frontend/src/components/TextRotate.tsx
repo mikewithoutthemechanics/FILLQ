@@ -24,18 +24,21 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
         display: 'inline-block',
         position: 'relative',
         verticalAlign: 'baseline',
-        minWidth: '8em',
+        minWidth: '9em',
+        height: '1.4em',
       }}
     >
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="wait">
         <motion.span
           key={texts[index]}
-          initial={{ opacity: 0, filter: 'blur(4px)' }}
-          animate={{ opacity: 1, filter: 'blur(0px)' }}
-          exit={{ opacity: 0, filter: 'blur(4px)' }}
-          transition={{ duration: 0.25 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
           style={{
-            display: 'inline',
+            position: 'absolute',
+            left: 0,
+            top: 0,
             padding: '0.08em 0.2em',
             borderRadius: '0.15em',
             background: 'linear-gradient(135deg, #D4451A 0%, #B83A18 50%, #D4451A 100%)',

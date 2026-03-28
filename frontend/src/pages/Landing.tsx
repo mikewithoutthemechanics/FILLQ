@@ -121,7 +121,7 @@ export default function Landing() {
             {/* Left: copy */}
             <div>
               <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-                className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
+                className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[0.04em]"
                 style={{ fontFamily: font.display }}
               >
                 Every no-show<br />
@@ -322,8 +322,8 @@ export default function Landing() {
       {/* ── HOW IT WORKS ───────────────────────────────── */}
       <SectionBg id="how-it-works">
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
-          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>How it works</p>
-          <h2 className="text-[clamp(2rem,4vw,3.2rem)] leading-[1.1] tracking-[-0.02em] max-w-lg" style={{ fontFamily: font.display }}>
+          <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>How it works</p>
+          <h2 className="text-[clamp(2rem,4vw,3.2rem)] leading-[1.1] tracking-[0.04em] max-w-lg" style={{ fontFamily: font.display }}>
             Three steps to a <span style={{ color: C.g[700] }}>full studio</span>
           </h2>
 
@@ -349,8 +349,8 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
-              <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>The product</p>
-              <h2 className="text-[clamp(2.8rem,5.5vw,4.5rem)] leading-[1.02] tracking-[-0.03em]" style={{ fontFamily: font.display }}>
+              <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>The product</p>
+              <h2 className="text-[clamp(2.8rem,5.5vw,4.5rem)] leading-[1.02] tracking-[0.04em]" style={{ fontFamily: font.display }}>
                 Not just a dashboard.<br />
                 <span style={{ color: C.a[700] }}>A recovery engine.</span>
               </h2>
@@ -433,8 +433,8 @@ export default function Landing() {
       {/* ── TESTIMONIALS (task 4: social proof) ────────── */}
       <SectionBg>
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
-          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>What studios say</p>
-          <h2 className="text-[clamp(1.8rem,3.5vw,2.8rem)] leading-[1.1] tracking-[-0.02em] text-center mb-14" style={{ fontFamily: font.display }}>
+          <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>What studios say</p>
+          <h2 className="text-[clamp(1.8rem,3.5vw,2.8rem)] leading-[1.1] tracking-[0.04em] text-center mb-14" style={{ fontFamily: font.display }}>
             Loved by studio owners <span style={{ color: C.g[700] }}>across SA</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
@@ -516,7 +516,7 @@ export default function Landing() {
       {/* ── CTA ─────────────────────────────────────────── */}
       <SectionBg>
         <div className="max-w-[800px] mx-auto px-6 lg:px-10 py-24 lg:py-32 text-center">
-          <h2 className="text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] tracking-[0em]" style={{ fontFamily: font.display }}>
+          <h2 className="text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] tracking-[0.04em]" style={{ fontFamily: font.display }}>
             Ready to stop<br />losing revenue?
           </h2>
           <p className="mt-5 text-[16px]" style={{ color: C.t[500], fontFamily: font.body }}>
