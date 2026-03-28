@@ -1,345 +1,173 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  Settings, 
-  MessageSquare, 
-  Bell, 
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
+import {
+  MessageSquare,
+  Bell,
   Shield,
   Save,
-  CheckCircle
+  CheckCircle,
+  Building2
 } from 'lucide-react'
-import { settingsApi } from '../services/api'
-import type { FillIQSettings } from '../types'
+import { supabase } from '../hooks/useSupabase'
 
-function Toggle({ 
-  label, 
-  description, 
-  checked, 
-  onChange 
-}: { 
-  label: string
-  description: string
-  checked: boolean
-  onChange: (checked: boolean) => void
-}) {
+const C = {
+  g: { 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
+  r: { 700: '#6B1D1D' },
+  t: { 900: '#0F0F0F', 700: '#2D2D2D', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
+  b: '#E5E5E5',
+  w: '#FAFAF8',
+}
+const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
+
+function Toggle({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <div className="flex items-start justify-between py-4">
+    <div className="flex items-start justify-between py-4" style={{ borderBottom: `1px solid ${C.b}` }}>
       <div>
-        <h4 className="text-sm font-medium text-gray-900">{label}</h4>
-        <p className="text-sm text-gray-500 mt-1">{description}</p>
+        <h4 className="text-[14px] font-medium" style={{ fontFamily: font.body }}>{label}</h4>
+        <p className="text-[13px] mt-0.5" style={{ color: C.t[500], fontFamily: font.body }}>{desc}</p>
       </div>
-      <button
-        onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-          checked ? 'bg-brand-600' : 'bg-gray-200'
-        }`}
+      <button onClick={() => onChange(!checked)}
+        className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors flex-shrink-0 ml-4"
+        style={{ backgroundColor: checked ? C.g[800] : C.b }}
       >
-        <span
-          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-6' : 'translate-x-1'
-          }`}
-        />
+        <span className={`inline-block h-4 w-4 rounded-full bg-white transition-transform shadow-sm ${checked ? 'translate-x-6' : 'translate-x-1'}`} />
       </button>
     </div>
   )
 }
 
-function NumberInput({ 
-  label, 
-  description, 
-  value, 
-  onChange,
-  min = 0,
-  max = 100
-}: { 
-  label: string
-  description: string
-  value: number
-  onChange: (value: number) => void
-  min?: number
-  max?: number
+function Input({ label, desc, value, onChange, type = 'text', placeholder }: {
+  label: string; desc?: string; value: string | number; onChange: (v: any) => void; type?: string; placeholder?: string
 }) {
   return (
-    <div className="py-4">
-      <div className="flex items-center justify-between">
+    <div className="py-4" style={{ borderBottom: `1px solid ${C.b}` }}>
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h4 className="text-sm font-medium text-gray-900">{label}</h4>
-          <p className="text-sm text-gray-500 mt-1">{description}</p>
+          <h4 className="text-[14px] font-medium" style={{ fontFamily: font.body }}>{label}</h4>
+          {desc && <p className="text-[13px] mt-0.5" style={{ color: C.t[500], fontFamily: font.body }}>{desc}</p>}
         </div>
-        <input
-          type="number"
-          min={min}
-          max={max}
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value) || 0)}
-          className="w-24 px-3 py-2 border border-gray-300 rounded-lg text-right focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
+        <input type={type} value={value} onChange={e => onChange(type === 'number' ? parseInt(e.target.value) || 0 : e.target.value)}
+          placeholder={placeholder}
+          className="w-28 px-3 py-2 rounded-lg text-[14px] text-right outline-none transition-all"
+          style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body, backgroundColor: '#fff' }}
+          onFocus={e => e.target.style.borderColor = C.g[600]}
+          onBlur={e => e.target.style.borderColor = C.b}
         />
       </div>
     </div>
   )
 }
 
+function Card({ icon: Icon, title, desc, color, children }: {
+  icon: any; title: string; desc: string; color: string; children: React.ReactNode
+}) {
+  return (
+    <div className="rounded-2xl p-6" style={{ backgroundColor: '#fff', border: `1px solid ${C.b}` }}>
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: color + '15' }}>
+          <Icon className="w-5 h-5" style={{ color }} />
+        </div>
+        <div>
+          <h2 className="text-[16px] font-semibold" style={{ fontFamily: font.display }}>{title}</h2>
+          <p className="text-[12px]" style={{ color: C.t[500], fontFamily: font.body }}>{desc}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  )
+}
+
 export default function SettingsPage() {
-  const queryClient = useQueryClient()
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [settings, setSettings] = useState<any>({})
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['settings'],
-    queryFn: () => settingsApi.get(),
-  })
+  useEffect(() => {
+    loadSettings()
+  }, [])
 
-  const [localSettings, setLocalSettings] = useState<Partial<FillIQSettings>>({})
-
-  // Update local settings when data loads
-  if (data?.data?.data && Object.keys(localSettings).length === 0) {
-    setLocalSettings(data.data.data)
+  const loadSettings = async () => {
+    const studioId = localStorage.getItem('filliq_studio_id') || 'default-studio'
+    const { data } = await supabase.from('filliq_settings').select('*').eq('studio_id', studioId).single()
+    if (data) setSettings(data)
+    setLoading(false)
   }
 
-  const updateMutation = useMutation({
-    mutationFn: (data: any) => settingsApi.update(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings'] })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    },
-  })
-
-  const handleSave = () => {
-    updateMutation.mutate(localSettings)
+  const handleSave = async () => {
+    setSaving(true)
+    const studioId = localStorage.getItem('filliq_studio_id') || 'default-studio'
+    await supabase.from('filliq_settings').update(settings).eq('studio_id', studioId)
+    setSaving(false)
+    setSaved(true)
+    setTimeout(() => setSaved(false), 3000)
   }
 
-  const updateSetting = (key: keyof FillIQSettings, value: any) => {
-    setLocalSettings(prev => ({ ...prev, [key]: value }))
-  }
+  const update = (key: string, value: any) => setSettings((s: any) => ({ ...s, [key]: value }))
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-8 bg-gray-200 rounded w-1/4 animate-pulse" />
-        <div className="card h-96 animate-pulse" />
+        <div className="h-8 rounded w-1/4 animate-pulse" style={{ backgroundColor: C.b }} />
+        <div className="h-64 rounded-2xl animate-pulse" style={{ backgroundColor: C.b }} />
       </div>
     )
   }
 
-  const settings = localSettings as FillIQSettings
-
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
-          <p className="text-gray-500 mt-1">
-            Configure FillIQ behavior and integrations
-          </p>
+          <h1 className="text-[28px] font-bold" style={{ fontFamily: font.display }}>Settings</h1>
+          <p className="text-[14px] mt-1" style={{ color: C.t[500], fontFamily: font.body }}>Configure FillIQ for your studio</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={updateMutation.isPending}
-          className="btn-primary flex items-center gap-2"
+        <motion.button onClick={handleSave} disabled={saving}
+          whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all disabled:opacity-50"
+          style={{ backgroundColor: C.g[800], fontFamily: font.body }}
         >
-          {updateMutation.isPending ? (
-            'Saving...'
-          ) : saved ? (
-            <>
-              <CheckCircle className="w-4 h-4" />
-              Saved
-            </>
-          ) : (
-            <>
-              <Save className="w-4 h-4" />
-              Save Changes
-            </>
-          )}
-        </button>
+          {saving ? 'Saving...' : saved ? <><CheckCircle className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save</>}
+        </motion.button>
       </div>
 
-      {/* Waitlist Settings */}
-      <div className="card">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-brand-100 rounded-lg">
-            <MessageSquare className="w-5 h-5 text-brand-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Waitlist Engine</h2>
-            <p className="text-sm text-gray-500">Configure automatic spot filling</p>
-          </div>
-        </div>
+      {/* Studio */}
+      <Card icon={Building2} title="Studio" desc="Your business details" color={C.g[800]}>
+        <Input label="Studio name" value={localStorage.getItem('filliq_studio_name') || ''} onChange={() => {}} placeholder="Your studio" />
+        <Input label="Default class price (ZAR)" value={settings.default_class_price || 150} onChange={(v) => update('default_class_price', v)} type="number" />
+      </Card>
 
-        <div className="space-y-2 divide-y divide-gray-100">
-          <Toggle
-            label="Auto-fill enabled"
-            description="Automatically fill cancelled spots via WhatsApp"
-            checked={settings.autoFillEnabled ?? true}
-            onChange={(v) => updateSetting('autoFillEnabled', v)}
-          />
-          
-          <NumberInput
-            label="Max simultaneous invites"
-            description="Number of waitlist members to invite at once"
-            value={settings.maxSimultaneousInvites ?? 3}
-            onChange={(v) => updateSetting('maxSimultaneousInvites', v)}
-            min={1}
-            max={10}
-          />
-          
-          <NumberInput
-            label="Invite expiry (minutes)"
-            description="How long members have to respond"
-            value={settings.inviteExpiryMinutes ?? 30}
-            onChange={(v) => updateSetting('inviteExpiryMinutes', v)}
-            min={5}
-            max={120}
-          />
-          
-          <NumberInput
-            label="Auto-expand delay (minutes)"
-            description="Wait before inviting next batch"
-            value={settings.autoExpandAfterMinutes ?? 30}
-            onChange={(v) => updateSetting('autoExpandAfterMinutes', v)}
-            min={5}
-            max={120}
-          />
-        </div>
-      </div>
+      {/* Waitlist Engine */}
+      <Card icon={MessageSquare} title="Waitlist Engine" desc="Automatic spot filling" color={C.g[700]}>
+        <Toggle label="Auto-fill enabled" desc="Fill cancelled spots via WhatsApp" checked={settings.auto_fill_enabled ?? true} onChange={(v) => update('auto_fill_enabled', v)} />
+        <Input label="Max simultaneous invites" desc="Members to invite at once" value={settings.max_simultaneous_invites || 3} onChange={(v) => update('max_simultaneous_invites', v)} type="number" />
+        <Input label="Invite expiry (min)" desc="How long to respond" value={settings.invite_expiry_minutes || 30} onChange={(v) => update('invite_expiry_minutes', v)} type="number" />
+      </Card>
 
-      {/* Rebook Nudge Settings */}
-      <div className="card">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-blue-100 rounded-lg">
-            <Bell className="w-5 h-5 text-blue-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Rebook Nudges</h2>
-            <p className="text-sm text-gray-500">Post-class rebooking reminders</p>
-          </div>
-        </div>
+      {/* Rebook */}
+      <Card icon={Bell} title="Rebook Nudges" desc="Post-class reminders" color={C.g[600]}>
+        <Toggle label="Rebook nudges" desc="Send reminders after attendance" checked={settings.rebook_nudge_enabled ?? true} onChange={(v) => update('rebook_nudge_enabled', v)} />
+        <Input label="Delay (min)" desc="Time after class to nudge" value={settings.rebook_nudge_delay_minutes || 45} onChange={(v) => update('rebook_nudge_delay_minutes', v)} type="number" />
+      </Card>
 
-        <div className="space-y-2 divide-y divide-gray-100">
-          <Toggle
-            label="Rebook nudges enabled"
-            description="Send WhatsApp reminders after class attendance"
-            checked={settings.rebookNudgeEnabled ?? true}
-            onChange={(v) => updateSetting('rebookNudgeEnabled', v)}
-          />
-          
-          <NumberInput
-            label="Nudge delay (minutes)"
-            description="Time after class ends to send nudge"
-            value={settings.rebookNudgeDelayMinutes ?? 45}
-            onChange={(v) => updateSetting('rebookNudgeDelayMinutes', v)}
-            min={15}
-            max={180}
-          />
-        </div>
-      </div>
+      {/* Churn */}
+      <Card icon={Shield} title="Churn Prevention" desc="Member retention" color={C.r[700]}>
+        <Input label="Churn threshold" desc="Score to flag as at-risk (0-100)" value={settings.churn_score_threshold || 65} onChange={(v) => update('churn_score_threshold', v)} type="number" />
+        <Toggle label="Auto-nudge" desc="Auto-send to highest-risk members" checked={settings.auto_nudge_enabled ?? false} onChange={(v) => update('auto_nudge_enabled', v)} />
+        <Input label="Nudge cooldown (days)" desc="Between nudges to same member" value={settings.churn_nudge_cooldown_days || 14} onChange={(v) => update('churn_nudge_cooldown_days', v)} type="number" />
+      </Card>
 
-      {/* Churn Settings */}
-      <div className="card">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-purple-100 rounded-lg">
-            <Shield className="w-5 h-5 text-purple-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">Churn Prevention</h2>
-            <p className="text-sm text-gray-500">Member retention settings</p>
-          </div>
-        </div>
-
-        <div className="space-y-2 divide-y divide-gray-100">
-          <NumberInput
-            label="Churn score threshold"
-            description="Minimum score to flag as at-risk (0-100)"
-            value={settings.churnScoreThreshold ?? 65}
-            onChange={(v) => updateSetting('churnScoreThreshold', v)}
-            min={0}
-            max={100}
-          />
-          
-          <Toggle
-            label="Auto-nudge enabled"
-            description="Automatically send nudges to highest-risk members"
-            checked={settings.autoNudgeEnabled ?? false}
-            onChange={(v) => updateSetting('autoNudgeEnabled', v)}
-          />
-          
-          <NumberInput
-            label="Auto-nudge threshold"
-            description="Score required for automatic nudge"
-            value={settings.autoNudgeThreshold ?? 80}
-            onChange={(v) => updateSetting('autoNudgeThreshold', v)}
-            min={0}
-            max={100}
-          />
-          
-          <NumberInput
-            label="Nudge cooldown (days)"
-            description="Minimum days between nudges to same member"
-            value={settings.churnNudgeCooldownDays ?? 14}
-            onChange={(v) => updateSetting('churnNudgeCooldownDays', v)}
-            min={1}
-            max={90}
-          />
-        </div>
-      </div>
-
-      {/* WhatsApp Settings */}
-      <div className="card">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-green-100 rounded-lg">
-            <MessageSquare className="w-5 h-5 text-green-600" />
-          </div>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">WhatsApp Integration</h2>
-            <p className="text-sm text-gray-500">WABA provider settings</p>
+      {/* WhatsApp */}
+      <Card icon={MessageSquare} title="WhatsApp" desc="Integration settings" color="#25D366">
+        <Input label="Studio WhatsApp number" desc="For notifications" value={settings.studio_whatsapp_number || ''} onChange={(v) => update('studio_whatsapp_number', v)} placeholder="+27..." />
+        <div className="py-4">
+          <h4 className="text-[14px] font-medium mb-2" style={{ fontFamily: font.body }}>Status</h4>
+          <div className="flex items-center gap-2 text-[13px]" style={{ fontFamily: font.body }}>
+            <div className="w-2 h-2 rounded-full" style={{ background: settings.studio_whatsapp_number ? C.g[600] : C.t[300] }} />
+            <span style={{ color: C.t[500] }}>{settings.studio_whatsapp_number ? 'Configured' : 'Not configured — add your number above'}</span>
           </div>
         </div>
-
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Provider
-            </label>
-            <select
-              value={settings.wabaProvider ?? '360dialog'}
-              onChange={(e) => updateSetting('wabaProvider', e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            >
-              <option value="360dialog">360dialog</option>
-              <option value="vonage">Vonage</option>
-            </select>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Phone Number ID
-            </label>
-            <input
-              type="text"
-              value={settings.wabaPhoneNumberId || ''}
-              onChange={(e) => updateSetting('wabaPhoneNumberId', e.target.value)}
-              placeholder="Enter your WABA phone number ID"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-900 mb-2">
-              Studio WhatsApp Number
-            </label>
-            <input
-              type="text"
-              value={settings.studioWhatsAppNumber || ''}
-              onChange={(e) => updateSetting('studioWhatsAppNumber', e.target.value)}
-              placeholder="+27831234567"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Used as fallback for replies and notifications
-            </p>
-          </div>
-        </div>
-      </div>
+      </Card>
     </div>
   )
 }
