@@ -120,7 +120,7 @@ export default function Landing() {
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             {/* Left: copy */}
             <div>
-              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
                 className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
                 style={{ fontFamily: font.display }}
               >
@@ -135,14 +135,14 @@ export default function Landing() {
                 </span>
               </motion.h1>
 
-              <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+              <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
                 className="mt-7 text-[18px] leading-[1.6] max-w-[500px]"
                 style={{ color: C.t[500], fontFamily: font.body }}
               >
                 WaitUp predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
               </motion.p>
 
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
                 className="mt-10 flex flex-wrap items-center gap-4"
               >
                 <Link to="/login"
@@ -159,7 +159,7 @@ export default function Landing() {
                 </button>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
                 className="mt-14 flex items-center gap-6 flex-wrap"
               >
                 <div className="flex -space-x-2">
@@ -186,7 +186,7 @@ export default function Landing() {
             <motion.div
               initial={{ opacity: 0, y: 40, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+              transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
               className="w-full"
             >
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/[0.1]"
@@ -229,7 +229,7 @@ export default function Landing() {
                       <motion.div key={i}
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.9 + i * 0.08 }}
+                        transition={{ delay: 0.3 + i * 0.05 }}
                         className="rounded-xl p-3"
                         style={{ backgroundColor: card.bg, border: `1px solid ${C.b}` }}
                       >
@@ -251,7 +251,7 @@ export default function Landing() {
                         <motion.div key={i}
                           initial={{ height: 0 }}
                           animate={{ height: `${h}%` }}
-                          transition={{ delay: 1.1 + i * 0.03, duration: 0.4, ease: 'easeOut' }}
+                          transition={{ delay: 0.4 + i * 0.02, duration: 0.4, ease: 'easeOut' }}
                           className="flex-1 rounded-sm"
                           style={{ backgroundColor: h > 70 ? C.g[700] : C.g[300] }}
                         />
@@ -392,7 +392,7 @@ export default function Landing() {
                       initial={{ opacity: 0, x: -12 }}
                       whileInView={{ opacity: 1, x: 0 }}
                       viewport={{ once: true }}
-                      transition={{ delay: i * 0.15 }}
+                      transition={{ delay: i * 0.04 }}
                       className="relative"
                     >
                       <div className="absolute -left-5 top-1 w-3 h-3 rounded-full border-2" style={{ borderColor: item.badgeColor, backgroundColor: C.w }} />
