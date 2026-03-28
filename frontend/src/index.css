@@ -4,7 +4,8 @@
 
 @font-face {
   font-family: 'Francy Regular';
-  src: url('/fonts/FrancyRegular.ttf') format('truetype');
+  src: url('/fonts/FrancyRegular.woff') format('woff'),
+       url('/fonts/FrancyRegular.ttf') format('truetype');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
