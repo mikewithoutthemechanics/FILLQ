@@ -26,7 +26,7 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
         verticalAlign: 'baseline',
         minWidth: '9em',
         height: '1.4em',
-        marginTop: '0.25em',
+        marginTop: '0.4em',
       }}
     >
       <AnimatePresence mode="wait">
