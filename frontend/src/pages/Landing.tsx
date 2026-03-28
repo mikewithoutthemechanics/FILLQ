@@ -301,11 +301,11 @@ export default function Landing() {
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             <div>
               <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>The product</p>
-              <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[-0.02em]" style={{ fontFamily: font.display }}>
+              <h2 className="text-[clamp(2.8rem,5.5vw,4.5rem)] leading-[1.02] tracking-[-0.03em]" style={{ fontFamily: font.display }}>
                 Not just a dashboard.<br />
                 <span style={{ color: C.a[700] }}>A recovery engine.</span>
               </h2>
-              <p className="mt-5 text-[15px] leading-[1.7] max-w-md" style={{ color: C.t[500], fontFamily: font.body }}>
+              <p className="mt-6 text-[17px] leading-[1.7] max-w-md" style={{ color: C.t[500], fontFamily: font.body }}>
                 WaitUp runs silently in the background. It scores, it fills, it nudges. You just see the revenue coming back.
               </p>
 
@@ -390,46 +390,51 @@ export default function Landing() {
       {/* ── PRICING ─────────────────────────────────────── */}
       <SectionBg id="pricing" style={{ backgroundColor: '#fff' }}>
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
-          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body }}>Pricing</p>
-          <h2 className="text-[clamp(2rem,4vw,3.2rem)] leading-[1.1] tracking-[-0.02em] max-w-lg" style={{ fontFamily: font.display }}>
-            Simple plans for a <span style={{ color: C.g[700] }}>full studio</span>
+          <p className="text-[12px] font-medium uppercase mb-3" style={{ color: C.g[700], fontFamily: font.body, letterSpacing: '0.15em' }}>Pricing</p>
+          <h2 className="text-[clamp(2.2rem,4.5vw,3.5rem)] leading-[1.08] max-w-lg" style={{ fontFamily: font.display, letterSpacing: '-0.025em' }}>
+            Simple plans for a<br /><span style={{ color: C.g[700] }}>full studio</span>
           </h2>
 
-          <div className="mt-14 grid md:grid-cols-4 gap-4">
+          <div className="mt-14 grid md:grid-cols-4 gap-5">
             {[
-              { name: 'Starter', price: 'Free', desc: 'Try it out', features: ['1 studio', '50 bookings/mo', 'Risk scoring', 'Email support'], hl: false },
-              { name: 'Growth', price: 'R299', desc: '/month', features: ['1 studio', '500 bookings/mo', 'WhatsApp auto-fill', 'Churn radar', 'Dashboard'], hl: true },
-              { name: 'Studio Pro', price: 'R599', desc: '/month', features: ['Up to 3 studios', 'Unlimited bookings', 'Priority WhatsApp', 'API access', 'Reports'], hl: false },
-              { name: 'Enterprise', price: 'Custom', desc: 'Chains & franchises', features: ['Unlimited studios', 'White-label', 'Dedicated support', 'Custom integrations'], hl: false },
+              { name: 'Starter', price: 'Free', desc: 'Try it out', features: ['1 studio', '50 bookings/mo', 'Risk scoring', 'Email support'], hl: false, cta: 'Start Free' },
+              { name: 'Growth', price: 'R299', desc: '/month', features: ['1 studio', '500 bookings/mo', 'WhatsApp auto-fill', 'Churn radar', 'Dashboard'], hl: true, cta: 'Get Started' },
+              { name: 'Studio Pro', price: 'R599', desc: '/month', features: ['Up to 3 studios', 'Unlimited bookings', 'Priority WhatsApp', 'API access', 'Reports'], hl: false, cta: 'Go Pro' },
+              { name: 'Enterprise', price: 'Custom', desc: 'Chains & franchises', features: ['Unlimited studios', 'White-label', 'Dedicated support', 'Custom integrations'], hl: false, cta: 'Contact Us' },
             ].map((plan, i) => (
               <Reveal key={i} delay={i * 0.08}>
-                <div className="rounded-2xl p-6 h-full flex flex-col"
+                <div className="rounded-[1.25rem] p-7 h-full flex flex-col transition-all hover:shadow-lg"
                   style={{
-                    backgroundColor: plan.hl ? C.g[800] : '#FAFAF8',
-                    border: `1px solid ${plan.hl ? C.g[800] : C.b}`,
+                    backgroundColor: plan.hl ? C.g[800] : '#fff',
+                    border: plan.hl ? 'none' : `1.5px solid ${C.b}`,
                     color: plan.hl ? '#fff' : C.t[900],
+                    boxShadow: plan.hl ? '0 8px 32px rgba(45,80,22,0.2)' : 'none',
                   }}
                 >
-                  <p className="text-[12px] font-medium" style={{ color: plan.hl ? C.g[300] : C.t[500], fontFamily: font.body }}>{plan.name}</p>
-                  <div className="mt-2 text-[32px] font-bold" style={{ fontFamily: font.display }}>{plan.price}</div>
-                  <p className="text-[11px] mt-0.5" style={{ color: plan.hl ? C.g[400] : C.t[400] }}>{plan.desc}</p>
-                  <ul className="mt-5 space-y-2.5 flex-1">
+                  <p className="text-[11px] font-semibold uppercase" style={{ color: plan.hl ? 'rgba(255,255,255,0.6)' : C.t[400], fontFamily: font.body, letterSpacing: '0.1em' }}>{plan.name}</p>
+                  <div className="mt-3 flex items-baseline gap-1">
+                    <span className="text-[36px] font-bold leading-none" style={{ fontFamily: font.display }}>{plan.price}</span>
+                    {plan.price !== 'Free' && plan.price !== 'Custom' && <span className="text-[13px]" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>{plan.desc}</span>}
+                  </div>
+                  {plan.price === 'Free' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>No card needed</p>}
+                  {plan.price === 'Custom' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>Let's talk</p>}
+                  <ul className="mt-6 space-y-3 flex-1">
                     {plan.features.map((f, j) => (
-                      <li key={j} className="flex items-start gap-2 text-[13px]" style={{ fontFamily: font.body }}>
-                        <Check className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" style={{ color: plan.hl ? C.g[300] : C.g[700] }} />
+                      <li key={j} className="flex items-start gap-2.5 text-[13px]" style={{ fontFamily: font.body }}>
+                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: plan.hl ? 'rgba(255,255,255,0.7)' : C.g[700] }} />
                         {f}
                       </li>
                     ))}
                   </ul>
                   <Link to="/login"
-                    className="mt-6 block text-center py-2.5 rounded-full text-[13px] font-semibold transition-all"
+                    className="mt-7 block text-center py-3 rounded-xl text-[14px] font-semibold transition-all hover:shadow-md"
                     style={{
-                      backgroundColor: plan.hl ? '#fff' : 'transparent',
-                      color: plan.hl ? C.g[900] : C.t[800],
-                      border: plan.hl ? 'none' : `1px solid ${C.b}`,
+                      backgroundColor: plan.hl ? '#fff' : C.g[50],
+                      color: plan.hl ? C.g[900] : C.g[800],
+                      border: plan.hl ? 'none' : `1.5px solid ${C.g[200]}`,
                       fontFamily: font.body,
                     }}
-                  >{plan.hl ? 'Get Started' : 'Choose Plan'}</Link>
+                  >{plan.cta}</Link>
                 </div>
               </Reveal>
             ))}
