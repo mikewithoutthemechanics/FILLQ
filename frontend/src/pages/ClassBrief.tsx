@@ -69,11 +69,11 @@ export default function ClassBrief() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
           <Stat label="Classes" val={classes.length} icon={<Calendar className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
           <Stat label="Booked" val={s(c => c.booked_count)} icon={<Users className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
-          <Stat label="High Risk" val={s(c => c.high_risk_count)} icon={<AlertTriangle className="w-5 h-5" />} bg="#FEE2E2" fg="#7D4E37" />
+          <Stat label="High Risk" val={s(c => c.high_risk_count)} icon={<AlertTriangle className="w-5 h-5" />} bg="#FEE2E2" fg="#6B3A28" />
           <Stat label="New" val={s(c => c.new_members_count)} icon={<UserPlus className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
         </div>
 
-        {error && <div className="rounded-lg p-4 text-sm" style={{ background: '#FEE2E2', color: '#7D4E37' }}>{error}</div>}
+        {error && <div className="rounded-lg p-4 text-sm" style={{ background: '#FEE2E2', color: '#6B3A28' }}>{error}</div>}
 
         {/* Loading */}
         {loading && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -115,7 +115,7 @@ function Stat({ label, val, icon, bg, fg }: { label: string; val: number; icon: 
 function ClassCard({ cls }: { cls: ClassBrief }) {
   const start = new Date(cls.start_time)
   const isSoon = start.getTime() - Date.now() > 0 && start.getTime() - Date.now() < 7200000
-  const riskCol = cls.risk_score >= 70 ? '#7D4E37' : cls.risk_score >= 40 ? '#C67B5C' : '#4A7C28'
+  const riskCol = cls.risk_score >= 70 ? '#6B3A28' : cls.risk_score >= 40 ? '#E07A5F' : '#4A7C28'
   const riskBg = cls.risk_score >= 70 ? '#FEE2E2' : cls.risk_score >= 40 ? '#FEF3C7' : '#E8F0DE'
 
   return (
@@ -147,8 +147,8 @@ function ClassCard({ cls }: { cls: ClassBrief }) {
 function Cell({ icon, val, label, hi }: { icon: React.ReactNode; val: number; label: string; hi?: boolean }) {
   return (
     <div className="text-center p-2 sm:p-3 rounded-lg" style={{ background: hi ? '#FEE2E2' : '#F4F8EF' }}>
-      <div className="flex justify-center mb-1" style={{ color: hi ? '#7D4E37' : '#4A7C28' }}>{icon}</div>
-      <p className="text-lg font-bold" style={{ color: hi ? '#7D4E37' : '#0F0F0F' }}>{val}</p>
+      <div className="flex justify-center mb-1" style={{ color: hi ? '#6B3A28' : '#4A7C28' }}>{icon}</div>
+      <p className="text-lg font-bold" style={{ color: hi ? '#6B3A28' : '#0F0F0F' }}>{val}</p>
       <p className="text-xs" style={{ color: '#8A8A8A' }}>{label}</p>
     </div>
   )

@@ -6,7 +6,7 @@ import { supabase } from '../hooks/useSupabase'
 
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  a: { 700: '#7D4E37', 600: '#C67B5C' },
+  a: { 700: '#6B3A28', 600: '#E07A5F' },
   t: { 900: '#0F0F0F', 700: '#2D2D2D', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -81,7 +81,7 @@ export default function Login() {
             </p>
             <div className="mt-8 flex items-center gap-4">
               <div className="flex -space-x-2">
-                {['#fff', '#D4E4C8', '#E8C4A8'].map((bg, i) => (
+                {['#fff', '#D4E4C8', '#F5D5C0'].map((bg, i) => (
                   <div key={i} className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-[9px] font-bold"
                     style={{ backgroundColor: bg, borderColor: C.g[800], color: C.g[900] }}
                   >{['SJ','MS','EW'][i]}</div>
@@ -230,6 +230,22 @@ export default function Login() {
               style={{ color: C.t[400], fontFamily: font.body }}
             >
               Skip login — demo mode
+            </button>
+          </div>
+
+          {/* Dev mode */}
+          <div className="mt-3 text-center">
+            <button
+              onClick={() => {
+                localStorage.setItem('filliq_onboarded', 'true')
+                localStorage.setItem('filliq_studio_id', 'demo-studio')
+                localStorage.setItem('filliq_studio_name', 'Demo Studio')
+                navigate('/')
+              }}
+              className="text-[12px] underline transition-colors"
+              style={{ color: C.t[300], fontFamily: font.body }}
+            >
+              ⚡ Dev → dashboard
             </button>
           </div>
 

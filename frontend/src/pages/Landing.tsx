@@ -23,7 +23,7 @@ import HolographicCard from '../components/HolographicCard'
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 500: '#5E9A34', 400: '#8BAA6B', 300: '#B5CDA3', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  a: { 700: '#7D4E37', 600: '#C67B5C', 500: '#D4956E', 400: '#E8C4A8', 100: '#FDF2EC' },
+  a: { 700: '#6B3A28', 600: '#E07A5F', 500: '#F09E7A', 400: '#F5D5C0', 100: '#FFF0E8' },
   t: { 900: '#0F0F0F', 800: '#1A1A1A', 700: '#2D2D2D', 600: '#4A4A4A', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -89,15 +89,6 @@ export default function Landing() {
 
         <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
           <div className="max-w-[680px]">
-            {/* Eyebrow */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[12px] font-medium mb-8 tracking-wide"
-              style={{ backgroundColor: C.g[100], color: C.g[800], fontFamily: font.body }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full" style={{ background: C.g[600] }} />
-              AI-POWERED NO-SHOW PREVENTION
-            </motion.div>
-
             {/* Headline */}
             <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
               className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
