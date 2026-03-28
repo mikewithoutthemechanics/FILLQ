@@ -126,11 +126,13 @@ export default function Landing() {
               >
                 Every no-show<br />
                 costs you <span style={{ color: C.g[700] }}>R150.</span><br />
-                Stop{' '}
-                <TextRotate
-                  texts={['no-shows.', 'empty spots.', 'lost revenue.', 'churn.', 'waiting.']}
-                  interval={2200}
-                />
+                <span style={{ display: 'inline-block', whiteSpace: 'nowrap' }}>
+                  Stop{' '}
+                  <TextRotate
+                    texts={['no-shows.', 'empty spots.', 'lost revenue.', 'churn.', 'waiting.']}
+                    interval={2200}
+                  />
+                </span>
               </motion.h1>
 
               <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
