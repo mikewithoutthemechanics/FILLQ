@@ -23,10 +23,9 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
       style={{
         display: 'inline-block',
         position: 'relative',
-        verticalAlign: 'baseline',
+        verticalAlign: 'bottom',
         minWidth: '9em',
-        height: '1.4em',
-        marginTop: '0.4em',
+        height: '1.2em',
       }}
     >
       <AnimatePresence mode="wait">
@@ -37,10 +36,8 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2 }}
           style={{
-            position: 'absolute',
-            left: 0,
-            top: 0,
-            padding: '0.08em 0.2em',
+            display: 'inline-block',
+            padding: '0.12em 0.25em',
             borderRadius: '0.15em',
             background: 'linear-gradient(135deg, #D4451A 0%, #B83A18 50%, #D4451A 100%)',
             color: '#fff',
