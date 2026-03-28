@@ -1,233 +1,155 @@
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  AlertTriangle,
-  UserPlus,
-  List,
-  ChevronRight
-} from 'lucide-react'
-import { dashboardApi } from '../services/api'
-import type { TeacherClassBrief } from '../types'
+import { useState, useEffect } from 'react'
+import { supabase } from '../hooks/useSupabase'
+import { Calendar, Clock, Users, AlertTriangle, UserPlus, List, ChevronRight } from 'lucide-react'
 
-function ClassCard({ brief }: { brief: TeacherClassBrief }) {
-  const startTime = new Date(brief.startTime)
-  const now = new Date()
-  const isUpcoming = startTime > now
-  const isSoon = isUpcoming && (startTime.getTime() - now.getTime()) < 2 * 60 * 60 * 1000
+interface ClassBrief {
+  id: string; name: string; class_type: string; start_time: string
+  instructor: string; capacity: number; booked_count: number
+  waitlist_count: number; high_risk_count: number; new_members_count: number; risk_score: number
+}
+
+export default function ClassBrief() {
+  const [classes, setClasses] = useState<ClassBrief[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => { fetchToday() }, [])
+
+  async function fetchToday() {
+    setLoading(true)
+    const today = new Date()
+    const start = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
+    const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
+
+    const { data, error: err } = await supabase
+      .from('classes')
+      .select(`id, name, class_type, start_time, instructor, capacity,
+        bookings(count), waitlist_entries(count),
+        booking_risk_scores(risk_score, member_id),
+        members:bookings(membership_type, created_at)`)
+      .gte('start_time', start).lt('start_time', end)
+      .order('start_time', { ascending: true })
+
+    if (err) { setError(err.message); setLoading(false); return }
+
+    setClasses((data || []).map((c: any) => {
+      const risks = c.booking_risk_scores || []
+      const avgRisk = risks.length > 0 ? Math.round(risks.reduce((s: number, r: any) => s + r.risk_score, 0) / risks.length) : 0
+      const newM = (c.members || []).filter((m: any) => m.membership_type === 'drop-in' || m.created_at > start)
+      return {
+        id: c.id, name: c.name, class_type: c.class_type, start_time: c.start_time,
+        instructor: c.instructor, capacity: c.capacity,
+        booked_count: c.bookings?.[0]?.count || 0,
+        waitlist_count: c.waitlist_entries?.[0]?.count || 0,
+        high_risk_count: risks.filter((r: any) => r.risk_score >= 70).length,
+        new_members_count: newM.length, risk_score: avgRisk,
+      }
+    }))
+    setLoading(false)
+  }
+
+  const s = (f: (c: ClassBrief) => number) => classes.reduce((a, c) => a + f(c), 0)
 
   return (
-    <div className={`card card-hover ${isSoon ? 'border-brand-300 ring-1 ring-brand-200' : ''}`}>
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-semibold text-gray-900">{brief.className}</h3>
-            {isSoon && (
-              <span className="badge badge-risk-medium">Soon</span>
-            )}
+    <div className="min-h-screen px-4 sm:px-6 py-6 sm:py-8" style={{ background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif" }}>
+      <div className="max-w-5xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl sm:text-3xl" style={{ fontFamily: "'DM Serif Display', serif", color: '#0F0F0F' }}>Class Briefs</h1>
+            <p className="mt-1 text-sm" style={{ color: '#6B6B6B' }}>Pre-class insights for today</p>
           </div>
-          <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
-            <Clock className="w-4 h-4" />
-            {startTime.toLocaleTimeString('en-ZA', {
-              hour: '2-digit',
-              minute: '2-digit',
-              hour12: true
-            })}
-            {' • '}
-            {startTime.toLocaleDateString('en-ZA', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'short'
-            })}
-          </p>
+          <div className="flex items-center gap-2 text-sm" style={{ color: '#6B6B6B' }}>
+            <Calendar className="w-4 h-4" style={{ color: '#4A7C28' }} />
+            {new Date().toLocaleDateString('en-ZA', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
         </div>
-        <ChevronRight className="w-5 h-5 text-gray-400" />
-      </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-4">
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <Users className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-          <p className="text-xl font-bold text-gray-900">{brief.confirmedCount}</p>
-          <p className="text-xs text-gray-500">Booked</p>
+        {/* Summary */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+          <Stat label="Classes" val={classes.length} icon={<Calendar className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
+          <Stat label="Booked" val={s(c => c.booked_count)} icon={<Users className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
+          <Stat label="High Risk" val={s(c => c.high_risk_count)} icon={<AlertTriangle className="w-5 h-5" />} bg="#FEE2E2" fg="#6B1D1D" />
+          <Stat label="New" val={s(c => c.new_members_count)} icon={<UserPlus className="w-5 h-5" />} bg="#E8F0DE" fg="#4A7C28" />
         </div>
-        <div className={`text-center p-3 rounded-lg ${
-          brief.highRiskCount > 0 ? 'bg-red-50' : 'bg-gray-50'
-        }`}>
-          <AlertTriangle className={`w-5 h-5 mx-auto mb-1 ${
-            brief.highRiskCount > 0 ? 'text-red-600' : 'text-gray-600'
-          }`} />
-          <p className={`text-xl font-bold ${
-            brief.highRiskCount > 0 ? 'text-red-600' : 'text-gray-900'
-          }`}>
-            {brief.highRiskCount}
-          </p>
-          <p className="text-xs text-gray-500">High Risk</p>
-        </div>
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <List className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-          <p className="text-xl font-bold text-gray-900">{brief.waitlistCount}</p>
-          <p className="text-xs text-gray-500">Waitlist</p>
-        </div>
-        <div className="text-center p-3 bg-gray-50 rounded-lg">
-          <UserPlus className="w-5 h-5 text-gray-600 mx-auto mb-1" />
-          <p className="text-xl font-bold text-gray-900">{brief.newMembersCount}</p>
-          <p className="text-xs text-gray-500">New</p>
-        </div>
-      </div>
 
-      {/* Note */}
-      {brief.note && (
-        <div className={`p-3 rounded-lg text-sm ${
-          brief.highRiskCount >= 2 
-            ? 'bg-red-50 text-red-700' 
-            : 'bg-brand-50 text-brand-700'
-        }`}>
-          {brief.note}
-        </div>
-      )}
+        {error && <div className="rounded-lg p-4 text-sm" style={{ background: '#FEE2E2', color: '#6B1D1D' }}>{error}</div>}
+
+        {/* Loading */}
+        {loading && <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {[1, 2].map(i => <div key={i} className="rounded-xl h-48 animate-pulse" style={{ background: '#E5E5E5' }} />)}
+        </div>}
+
+        {/* Empty */}
+        {!loading && classes.length === 0 && (
+          <div className="text-center py-16 rounded-xl" style={{ background: '#fff', border: '1px solid #E5E5E5' }}>
+            <Calendar className="w-12 h-12 mx-auto mb-3" style={{ color: '#8A8A8A' }} />
+            <h3 className="text-lg mb-1" style={{ fontFamily: "'DM Serif Display', serif", color: '#0F0F0F' }}>No classes today</h3>
+            <p className="text-sm" style={{ color: '#6B6B6B' }}>No classes are scheduled for today.</p>
+          </div>
+        )}
+
+        {/* Cards */}
+        {!loading && classes.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {classes.map(c => <ClassCard key={c.id} cls={c} />)}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-export default function ClassBrief() {
-  const [teacherId, setTeacherId] = useState('teacher-1') // In production, from auth context
+function Stat({ label, val, icon, bg, fg }: { label: string; val: number; icon: React.ReactNode; bg: string; fg: string }) {
+  return (
+    <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#fff', border: '1px solid #E5E5E5' }}>
+      <div className="p-2 rounded-lg" style={{ background: bg, color: fg }}>{icon}</div>
+      <div>
+        <p className="text-xl sm:text-2xl font-bold" style={{ fontFamily: "'DM Serif Display', serif", color: '#0F0F0F' }}>{val}</p>
+        <p className="text-xs sm:text-sm" style={{ color: '#6B6B6B' }}>{label}</p>
+      </div>
+    </div>
+  )
+}
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['teacher-daily', teacherId],
-    queryFn: () => dashboardApi.getTeacherDaily(teacherId),
-  })
-
-  const briefs: TeacherClassBrief[] = data?.data?.data || []
-
-  // Group by date
-  const groupedByDate = briefs.reduce((acc, brief) => {
-    const date = new Date(brief.startTime).toDateString()
-    if (!acc[date]) acc[date] = []
-    acc[date].push(brief)
-    return acc
-  }, {} as Record<string, TeacherClassBrief[]>)
+function ClassCard({ cls }: { cls: ClassBrief }) {
+  const start = new Date(cls.start_time)
+  const isSoon = start.getTime() - Date.now() > 0 && start.getTime() - Date.now() < 7200000
+  const riskCol = cls.risk_score >= 70 ? '#6B1D1D' : cls.risk_score >= 40 ? '#8B3A3A' : '#4A7C28'
+  const riskBg = cls.risk_score >= 70 ? '#FEE2E2' : cls.risk_score >= 40 ? '#FEF3C7' : '#E8F0DE'
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Class Briefs</h1>
-          <p className="text-gray-500 mt-1">
-            Pre-class insights for teachers
+    <div className="rounded-xl p-5 transition-shadow hover:shadow-md" style={{ background: '#fff', border: `1px solid ${isSoon ? '#4A7C28' : '#E5E5E5'}` }}>
+      <div className="flex items-start justify-between mb-4">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2 flex-wrap">
+            <h3 className="text-base sm:text-lg truncate" style={{ fontFamily: "'DM Serif Display', serif", color: '#0F0F0F' }}>{cls.name}</h3>
+            {isSoon && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#E8F0DE', color: '#2D5016' }}>Soon</span>}
+            <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: riskBg, color: riskCol }}>Risk {cls.risk_score}</span>
+          </div>
+          <p className="text-sm mt-1 flex items-center gap-1" style={{ color: '#8A8A8A' }}>
+            <Clock className="w-3.5 h-3.5" />
+            {start.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: true })} · {cls.instructor}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Calendar className="w-5 h-5 text-gray-500" />
-          <span className="text-gray-700">
-            {new Date().toLocaleDateString('en-ZA', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric'
-            })}
-          </span>
-        </div>
+        <ChevronRight className="w-5 h-5 flex-shrink-0" style={{ color: '#8A8A8A' }} />
       </div>
-
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card bg-gradient-to-br from-brand-50 to-white border-brand-100">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-100 rounded-lg">
-              <Calendar className="w-5 h-5 text-brand-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{briefs.length}</p>
-              <p className="text-sm text-gray-500">Classes today</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Users className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {briefs.reduce((sum, b) => sum + b.confirmedCount, 0)}
-              </p>
-              <p className="text-sm text-gray-500">Total bookings</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {briefs.reduce((sum, b) => sum + b.highRiskCount, 0)}
-              </p>
-              <p className="text-sm text-gray-500">High risk</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <UserPlus className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {briefs.reduce((sum, b) => sum + b.newMembersCount, 0)}
-              </p>
-              <p className="text-sm text-gray-500">New members</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-4 gap-2 sm:gap-3">
+        <Cell icon={<Users className="w-4 h-4" />} val={cls.booked_count} label="Booked" />
+        <Cell icon={<AlertTriangle className="w-4 h-4" />} val={cls.high_risk_count} label="Risk" hi={cls.high_risk_count > 0} />
+        <Cell icon={<List className="w-4 h-4" />} val={cls.waitlist_count} label="Wait" />
+        <Cell icon={<UserPlus className="w-4 h-4" />} val={cls.new_members_count} label="New" />
       </div>
+    </div>
+  )
+}
 
-      {/* Class List */}
-      {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="card h-48 animate-pulse">
-              <div className="h-full bg-gray-200 rounded" />
-            </div>
-          ))}
-        </div>
-      ) : briefs.length === 0 ? (
-        <div className="card text-center py-16">
-          <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            No classes scheduled
-          </h3>
-          <p className="text-gray-500">
-            You don't have any classes scheduled for today.
-          </p>
-        </div>
-      ) : (
-        <div className="space-y-8">
-          {Object.entries(groupedByDate).map(([date, dateBriefs]) => (
-            <div key={date}>
-              <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-                {new Date(date).toLocaleDateString('en-ZA', {
-                  weekday: 'long',
-                  day: 'numeric',
-                  month: 'long'
-                })}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {dateBriefs
-                  .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                  .map((brief) => (
-                    <ClassCard key={brief.classId} brief={brief} />
-                  ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+function Cell({ icon, val, label, hi }: { icon: React.ReactNode; val: number; label: string; hi?: boolean }) {
+  return (
+    <div className="text-center p-2 sm:p-3 rounded-lg" style={{ background: hi ? '#FEE2E2' : '#F4F8EF' }}>
+      <div className="flex justify-center mb-1" style={{ color: hi ? '#6B1D1D' : '#4A7C28' }}>{icon}</div>
+      <p className="text-lg font-bold" style={{ color: hi ? '#6B1D1D' : '#0F0F0F' }}>{val}</p>
+      <p className="text-xs" style={{ color: '#8A8A8A' }}>{label}</p>
     </div>
   )
 }

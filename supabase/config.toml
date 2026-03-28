@@ -33,3 +33,6 @@ verify_jwt = false
 
 [functions.parse-booking]
 verify_jwt = false
+
+[functions.qr-code]
+verify_jwt = false

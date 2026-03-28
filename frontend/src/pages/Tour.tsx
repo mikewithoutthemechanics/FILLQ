@@ -86,6 +86,8 @@ export default function Tour() {
   const [apiKey, setApiKey] = useState('')
   const [apiUrl, setApiUrl] = useState('')
   const [copied, setCopied] = useState(false)
+  const [qrCode, setQrCode] = useState<string | null>(null)
+  const [pairingInstructions, setPairingInstructions] = useState<string[]>([])
 
   const handleConnect = async () => {
     setConnecting(true)
@@ -100,18 +102,20 @@ export default function Tour() {
     } else if (selectedIntegration === 'excel') {
       // CSV/Excel upload — just mark as connected
     } else if (selectedIntegration === 'whatsapp_intake') {
-      // Provision WhatsApp node
+      // Provision WhatsApp node and get QR code
       try {
-        const { data } = await supabase.functions.invoke('provision-whatsapp', {
-          body: { studio_id: studioId, studio_name: localStorage.getItem('filliq_studio_name') }
+        const { data } = await supabase.functions.invoke('qr-code', {
+          body: { studio_id: studioId }
         })
-        if (data?.pairing_url) {
-          // Store the pairing info
-          localStorage.setItem('filliq_whatsapp_pairing', data.pairing_url)
+        if (data?.qr_svg) {
+          setQrCode(data.qr_svg)
+          setPairingInstructions(data.instructions || [])
         }
       } catch (e) {
-        console.error('Provision error:', e)
+        console.error('QR code error:', e)
       }
+      setConnecting(false)
+      return // Don't set connected yet — user needs to scan QR
     } else {
       // API-based integration
       await supabase.from('filliq_settings').update({
@@ -242,33 +246,58 @@ export default function Tour() {
 
             {selectedIntegration === 'whatsapp_intake' && (
               <div className="space-y-5">
-                <div className="rounded-xl p-5" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
-                  <p className="text-[14px] font-semibold mb-2" style={{ fontFamily: font.display }}>How it works</p>
-                  <div className="space-y-3">
-                    {[
-                      'Client texts your WhatsApp: "Can I book yoga tomorrow at 9am?"',
-                      'FillIQ parses the message — extracts name, class, date, time',
-                      'Booking created automatically in your system',
-                      'Confirmation sent back: "✅ Booked! See you there 🧘"'
-                    ].map((step, i) => (
-                      <div key={i} className="flex items-start gap-2.5">
-                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5" style={{ background: C.g[700] }}>{i + 1}</span>
-                        <p className="text-[13px]" style={{ color: C.t[700], fontFamily: font.body }}>{step}</p>
+                {!qrCode ? (
+                  <>
+                    <div className="rounded-xl p-5" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
+                      <p className="text-[14px] font-semibold mb-2" style={{ fontFamily: font.display }}>How it works</p>
+                      <div className="space-y-3">
+                        {[
+                          'Client texts your WhatsApp: "Can I book yoga tomorrow at 9am?"',
+                          'FillIQ parses the message — extracts name, class, date, time',
+                          'Booking created automatically in your system',
+                          'Confirmation sent back: "✅ Booked! See you there 🧘"'
+                        ].map((step, i) => (
+                          <div key={i} className="flex items-start gap-2.5">
+                            <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5" style={{ background: C.g[700] }}>{i + 1}</span>
+                            <p className="text-[13px]" style={{ color: C.t[700], fontFamily: font.body }}>{step}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                <div className="rounded-xl p-4" style={{ backgroundColor: '#FFF8F0', border: '1px solid #F5D6B8' }}>
-                  <p className="text-[13px] font-medium mb-1" style={{ fontFamily: font.body }}>⚡ Zero API costs</p>
-                  <p className="text-[12px]" style={{ color: C.t[500], fontFamily: font.body }}>
-                    Uses OpenClaw to connect your WhatsApp — no Meta Business account, no 360dialog fees. Just scan a QR code.
-                  </p>
-                </div>
+                    <div className="rounded-xl p-4" style={{ backgroundColor: '#FFF8F0', border: '1px solid #F5D6B8' }}>
+                      <p className="text-[13px] font-medium mb-1" style={{ fontFamily: font.body }}>⚡ Zero API costs</p>
+                      <p className="text-[12px]" style={{ color: C.t[500], fontFamily: font.body }}>
+                        Uses OpenClaw to connect your WhatsApp — no Meta Business account, no 360dialog fees. Just scan a QR code.
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* QR Code display */}
+                    <div className="rounded-xl p-6 text-center" style={{ backgroundColor: '#fff', border: `1px solid ${C.b}` }}>
+                      <p className="text-[14px] font-semibold mb-4" style={{ fontFamily: font.display }}>Scan with WhatsApp</p>
+                      <div className="inline-block p-4 rounded-xl" style={{ backgroundColor: '#fff', border: `2px solid ${C.g[800]}` }}
+                        dangerouslySetInnerHTML={{ __html: qrCode }}
+                      />
+                    </div>
 
-                <p className="text-[13px]" style={{ color: C.t[500], fontFamily: font.body }}>
-                  Click "Connect" below and we'll generate a QR code for you to scan with your WhatsApp.
-                </p>
+                    {/* Instructions */}
+                    <div className="space-y-2">
+                      {pairingInstructions.map((inst, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <span className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0" style={{ background: C.g[700] }}>{i + 1}</span>
+                          <p className="text-[13px]" style={{ fontFamily: font.body }}>{inst}</p>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
+                      <div className="w-3 h-3 rounded-full animate-pulse" style={{ background: C.g[600] }} />
+                      <p className="text-[13px]" style={{ color: C.g[800], fontFamily: font.body }}>Waiting for scan...</p>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 

@@ -1,305 +1,233 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { 
-  AlertTriangle, 
-  Users, 
-  MessageSquare, 
-  Gift,
-  CheckCircle,
-  Clock,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react'
-import { churnApi, dashboardApi } from '../services/api'
-import type { AtRiskMember } from '../types'
+import { useState, useEffect } from 'react'
+import { AlertTriangle, Users, CheckCircle, Clock, ChevronDown, ChevronUp, MessageSquare } from 'lucide-react'
+import { supabase } from '../hooks/useSupabase'
 
-function RiskBadge({ level }: { level: string }) {
-  const styles = {
-    medium: 'bg-yellow-100 text-yellow-800',
-    high: 'bg-orange-100 text-orange-800',
-    critical: 'bg-red-100 text-red-800',
-  }
+type RiskLevel = 'critical' | 'high' | 'medium'
 
-  const labels = {
-    medium: 'Medium',
-    high: 'High',
-    critical: 'Critical',
-  }
-
-  return (
-    <span className={`badge ${styles[level as keyof typeof styles] || styles.medium}`}>
-      {labels[level as keyof typeof labels] || level}
-    </span>
-  )
+interface ChurnMember {
+  id: string
+  member_id: string
+  churn_score: number
+  signals: string[]
+  created_at: string
+  name: string
+  phone: string
+  risk_level: RiskLevel
 }
 
-function MemberRow({ 
-  member, 
-  onNudge,
-  onOffer,
-  isNudging,
-  isOffering 
-}: { 
-  member: AtRiskMember
-  onNudge: (id: string) => void
-  onOffer: (id: string) => void
-  isNudging: boolean
-  isOffering: boolean
-}) {
-  const [expanded, setExpanded] = useState(false)
+function getRiskLevel(score: number): RiskLevel {
+  if (score >= 80) return 'critical'
+  if (score >= 65) return 'high'
+  return 'medium'
+}
+
+const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
+  critical: { bg: 'bg-[#6B1D1D]/10', text: 'text-[#6B1D1D]', label: 'Critical' },
+  high: { bg: 'bg-[#8B3A3A]/10', text: 'text-[#8B3A3A]', label: 'High' },
+  medium: { bg: 'bg-[#E8F0DE]', text: 'text-[#2D5016]', label: 'Medium' },
+}
+
+function RiskBadge({ level }: { level: RiskLevel }) {
+  const s = riskStyles[level]
+  return <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${s.bg} ${s.text}`}>{s.label}</span>
+}
+
+function MemberRow({ member }: { member: ChurnMember }) {
+  const [open, setOpen] = useState(false)
+  const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
 
   return (
-    <div className="border-b border-gray-200 last:border-0">
-      <div className="p-4 hover:bg-gray-50 transition-colors">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-semibold">
-              {member.firstName[0]}{member.lastName[0]}
+    <div className="border-b border-[#E5E5E5] last:border-0">
+      <button onClick={() => setOpen(!open)} className="w-full text-left p-4 hover:bg-[#F4F8EF] transition-colors">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#4A7C28] to-[#2D5016] flex items-center justify-center text-white font-semibold text-sm shrink-0">
+              {initials}
             </div>
-            <div>
-              <h4 className="font-medium text-gray-900">
-                {member.firstName} {member.lastName}
-              </h4>
-              <p className="text-sm text-gray-500">
-                Last seen: {member.lastSeen 
-                  ? new Date(member.lastSeen).toLocaleDateString('en-ZA', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric'
-                    })
-                  : 'Never'
-                }
-                {' • '}
-                {member.daysSinceLastAttendance} days ago
-              </p>
+            <div className="min-w-0">
+              <h4 className="font-medium text-[#0F0F0F] truncate" style={{ fontFamily: "'DM Serif Display', serif" }}>{member.name}</h4>
+              <p className="text-sm text-[#8A8A8A] truncate">{member.phone}</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-2xl font-bold text-gray-900">
-                {member.churnScore}
-              </div>
-              <div className="text-xs text-gray-500">churn score</div>
+          <div className="flex items-center gap-3 shrink-0">
+            <div className="text-right hidden sm:block">
+              <div className="text-xl font-bold text-[#0F0F0F]">{member.churn_score}</div>
+              <div className="text-xs text-[#8A8A8A]">score</div>
             </div>
-            <RiskBadge level={member.riskLevel} />
-            <button
-              onClick={() => setExpanded(!expanded)}
-              className="p-2 hover:bg-gray-100 rounded-lg"
-            >
-              {expanded ? (
-                <ChevronUp className="w-5 h-5 text-gray-500" />
-              ) : (
-                <ChevronDown className="w-5 h-5 text-gray-500" />
-              )}
-            </button>
+            <RiskBadge level={member.risk_level} />
+            {open ? <ChevronUp className="w-4 h-4 text-[#6B6B6B]" /> : <ChevronDown className="w-4 h-4 text-[#6B6B6B]" />}
           </div>
         </div>
-
-        {expanded && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex gap-3">
-              <button
-                onClick={() => onNudge(member.memberId)}
-                disabled={isNudging}
-                className="btn-secondary flex items-center gap-2 text-sm"
-              >
-                <MessageSquare className="w-4 h-4" />
-                {isNudging ? 'Sending...' : 'Send Nudge'}
-              </button>
-              <button
-                onClick={() => onOffer(member.memberId)}
-                disabled={isOffering}
-                className="btn-secondary flex items-center gap-2 text-sm"
-              >
-                <Gift className="w-4 h-4" />
-                {isOffering ? 'Processing...' : 'Free Class Offer'}
-              </button>
-            </div>
+        {/* Mobile score */}
+        <div className="flex sm:hidden items-center gap-2 mt-2 ml-[52px]">
+          <span className="text-lg font-bold text-[#0F0F0F]">{member.churn_score}</span>
+          <span className="text-xs text-[#8A8A8A]">churn score</span>
+        </div>
+      </button>
+      {open && (
+        <div className="px-4 pb-4 ml-0 sm:ml-[52px]">
+          <div className="p-3 rounded-lg bg-[#F4F8EF] border border-[#E5E5E5]">
+            <p className="text-xs font-semibold text-[#6B6B6B] uppercase tracking-wide mb-2">Risk Signals</p>
+            {member.signals.length > 0 ? (
+              <ul className="space-y-1">
+                {member.signals.map((s, i) => (
+                  <li key={i} className="text-sm text-[#0F0F0F] flex items-start gap-2">
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#8B3A3A] mt-0.5 shrink-0" />
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-[#8A8A8A]">No specific signals recorded</p>
+            )}
+            <p className="text-xs text-[#8A8A8A] mt-2">
+              Flagged {new Date(member.created_at).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short' })}
+            </p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }
 
 export default function ChurnPanel() {
-  const queryClient = useQueryClient()
-  const [filter, setFilter] = useState<'all' | 'critical' | 'high' | 'medium'>('all')
+  const [members, setMembers] = useState<ChurnMember[]>([])
+  const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState<'all' | RiskLevel>('all')
 
-  const { data: membersData, isLoading } = useQuery({
-    queryKey: ['at-risk-members'],
-    queryFn: () => dashboardApi.getAtRiskMembers(),
-  })
+  useEffect(() => {
+    async function fetchChurnData() {
+      setLoading(true)
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const { data: summaryData } = useQuery({
-    queryKey: ['churn-summary'],
-    queryFn: () => churnApi.getSummary(),
-  })
+      const { data: signals } = await supabase
+        .from('member_churn_signals')
+        .select('id, member_id, churn_score, signals, created_at')
+        .gte('churn_score', 50)
+        .gte('created_at', sevenDaysAgo)
+        .order('churn_score', { ascending: false })
 
-  const nudgeMutation = useMutation({
-    mutationFn: (memberId: string) => churnApi.sendNudge(memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['at-risk-members'] })
-    },
-  })
+      if (!signals?.length) { setMembers([]); setLoading(false); return }
 
-  const offerMutation = useMutation({
-    mutationFn: (memberId: string) => churnApi.sendOffer(memberId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['at-risk-members'] })
-    },
-  })
+      const memberIds = [...new Set(signals.map(s => s.member_id))]
+      const { data: memberRows } = await supabase
+        .from('members')
+        .select('id, name, phone')
+        .in('id', memberIds)
 
-  const members: AtRiskMember[] = membersData?.data?.data || []
-  const summary = summaryData?.data?.data || {
-    totalAtRisk: 0,
-    highRisk: 0,
-    criticalRisk: 0,
-    churnsPrevented: 0,
-    nudgesSent: 0,
-  }
+      const memberMap = Object.fromEntries((memberRows || []).map(m => [m.id, m]))
 
-  const filteredMembers = filter === 'all' 
-    ? members 
-    : members.filter(m => m.riskLevel === filter)
+      setMembers(signals.map(s => ({
+        ...s,
+        name: memberMap[s.member_id]?.name || 'Unknown',
+        phone: memberMap[s.member_id]?.phone || '',
+        risk_level: getRiskLevel(s.churn_score),
+      })))
+      setLoading(false)
+    }
+    fetchChurnData()
+  }, [])
+
+  const filtered = filter === 'all' ? members : members.filter(m => m.risk_level === filter)
+  const criticalCount = members.filter(m => m.risk_level === 'critical').length
+  const highCount = members.filter(m => m.risk_level === 'high').length
+
+  const filters: { key: 'all' | RiskLevel; label: string }[] = [
+    { key: 'all', label: 'All' },
+    { key: 'critical', label: 'Critical' },
+    { key: 'high', label: 'High' },
+    { key: 'medium', label: 'Medium' },
+  ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">At-Risk Members</h1>
-        <p className="text-gray-500 mt-1">
-          Members flagged by the churn early-warning system
-        </p>
+        <h1 className="text-2xl font-bold text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>Churn Panel</h1>
+        <p className="text-[#6B6B6B] mt-1">Members at risk of leaving — last 7 days</p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gray-100 rounded-lg">
-              <Users className="w-5 h-5 text-gray-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{summary.totalAtRisk}</p>
-              <p className="text-sm text-gray-500">Total at risk</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 rounded-lg">
-              <AlertTriangle className="w-5 h-5 text-red-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{summary.criticalRisk}</p>
-              <p className="text-sm text-gray-500">Critical</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+        {[
+          { icon: <Users className="w-5 h-5 text-[#4A7C28]" />, bg: 'bg-[#E8F0DE]', value: members.length, label: 'At Risk' },
+          { icon: <AlertTriangle className="w-5 h-5 text-[#6B1D1D]" />, bg: 'bg-[#6B1D1D]/10', value: criticalCount, label: 'Critical' },
+          { icon: <AlertTriangle className="w-5 h-5 text-[#8B3A3A]" />, bg: 'bg-[#8B3A3A]/10', value: highCount, label: 'High Risk' },
+          { icon: <CheckCircle className="w-5 h-5 text-[#4A7C28]" />, bg: 'bg-[#E8F0DE]', value: members.filter(m => m.risk_level === 'medium').length, label: 'Medium' },
+        ].map((s, i) => (
+          <div key={i} className="bg-white border border-[#E5E5E5] rounded-xl p-4">
+            <div className="flex items-center gap-3">
+              <div className={`p-2 rounded-lg ${s.bg}`}>{s.icon}</div>
+              <div>
+                <p className="text-2xl font-bold text-[#0F0F0F]">{s.value}</p>
+                <p className="text-xs text-[#8A8A8A]">{s.label}</p>
+              </div>
             </div>
           </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-brand-100 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-brand-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{summary.churnsPrevented}</p>
-              <p className="text-sm text-gray-500">Retained this month</p>
-            </div>
-          </div>
-        </div>
-        <div className="card">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <MessageSquare className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-gray-900">{summary.nudgesSent}</p>
-              <p className="text-sm text-gray-500">Nudges sent</p>
-            </div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Filters */}
-      <div className="flex items-center gap-2">
-        <span className="text-sm text-gray-500">Filter:</span>
-        {(['all', 'critical', 'high', 'medium'] as const).map((f) => (
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm text-[#6B6B6B]">Filter:</span>
+        {filters.map(f => (
           <button
-            key={f}
-            onClick={() => setFilter(f)}
+            key={f.key}
+            onClick={() => setFilter(f.key)}
             className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-              filter === f
-                ? 'bg-brand-100 text-brand-700'
-                : 'text-gray-600 hover:bg-gray-100'
+              filter === f.key
+                ? 'bg-[#E8F0DE] text-[#2D5016]'
+                : 'text-[#6B6B6B] hover:bg-[#F4F8EF]'
             }`}
           >
-            {f.charAt(0).toUpperCase() + f.slice(1)}
+            {f.label}
           </button>
         ))}
       </div>
 
       {/* Members List */}
-      <div className="card p-0 overflow-hidden">
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">
-            Members ({filteredMembers.length})
+      <div className="bg-white border border-[#E5E5E5] rounded-xl overflow-hidden">
+        <div className="px-4 py-3 bg-[#F4F8EF] border-b border-[#E5E5E5]">
+          <h3 className="font-semibold text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>
+            Members ({filtered.length})
           </h3>
         </div>
-        
-        {isLoading ? (
+        {loading ? (
           <div className="p-8 space-y-4">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3].map(i => (
               <div key={i} className="animate-pulse flex items-center gap-4">
-                <div className="w-10 h-10 bg-gray-200 rounded-full" />
+                <div className="w-10 h-10 bg-[#E5E5E5] rounded-full" />
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4" />
-                  <div className="h-3 bg-gray-200 rounded w-1/3" />
+                  <div className="h-4 bg-[#E5E5E5] rounded w-1/4" />
+                  <div className="h-3 bg-[#E5E5E5] rounded w-1/3" />
                 </div>
               </div>
             ))}
           </div>
-        ) : filteredMembers.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div className="p-8 text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-600" />
+            <div className="w-16 h-16 bg-[#E8F0DE] rounded-full flex items-center justify-center mx-auto mb-4">
+              <CheckCircle className="w-8 h-8 text-[#4A7C28]" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No at-risk members
-            </h3>
-            <p className="text-gray-500">
-              Great news! All your members are actively engaged.
-            </p>
+            <h3 className="text-lg font-medium text-[#0F0F0F] mb-2" style={{ fontFamily: "'DM Serif Display', serif" }}>All Clear</h3>
+            <p className="text-[#6B6B6B]">No at-risk members in the selected filter.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
-            {filteredMembers.map((member) => (
-              <MemberRow
-                key={member.memberId}
-                member={member}
-                onNudge={(id) => nudgeMutation.mutate(id)}
-                onOffer={(id) => offerMutation.mutate(id)}
-                isNudging={nudgeMutation.isPending}
-                isOffering={offerMutation.isPending}
-              />
-            ))}
+          <div>
+            {filtered.map(m => <MemberRow key={m.id} member={m} />)}
           </div>
         )}
       </div>
 
-      {/* Info Card */}
-      <div className="card bg-blue-50 border-blue-100">
-        <div className="flex items-start gap-3">
-          <Clock className="w-5 h-5 text-blue-600 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-blue-900">About Churn Scoring</h4>
-            <p className="text-sm text-blue-700 mt-1">
-              The churn algorithm runs nightly at 2 AM. Members are scored based on 
-              attendance patterns, recency, payment history, and app engagement. 
-              Scores ≥ 80 trigger automatic WhatsApp nudges (if enabled in settings).
-            </p>
-          </div>
+      {/* Info */}
+      <div className="bg-[#F4F8EF] border border-[#E8F0DE] rounded-xl p-4 flex items-start gap-3">
+        <Clock className="w-5 h-5 text-[#4A7C28] mt-0.5 shrink-0" />
+        <div>
+          <h4 className="font-medium text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>About Churn Scoring</h4>
+          <p className="text-sm text-[#6B6B6B] mt-1">
+            Scores are updated nightly. Members scoring ≥ 80 are critical, ≥ 65 high risk, ≥ 50 medium.
+            Scores factor in attendance patterns, recency, payment history, and app engagement.
+          </p>
         </div>
       </div>
     </div>
