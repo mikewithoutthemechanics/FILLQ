@@ -14,6 +14,7 @@ import { useAuth } from './hooks/useSupabase'
 import Landing from './pages/Landing'
 import Login from './pages/Login'
 import Onboarding from './pages/Onboarding'
+import Tour from './pages/Tour'
 import Dashboard from './pages/Dashboard'
 import ChurnPanel from './pages/ChurnPanel'
 import SettingsPage from './pages/Settings'
@@ -155,6 +156,13 @@ function App() {
       <Route path="/onboarding" element={
         <ProtectedRoute requireOnboarding={false}>
           <Onboarding />
+        </ProtectedRoute>
+      } />
+
+      {/* Tour & Integration */}
+      <Route path="/tour" element={
+        <ProtectedRoute>
+          <Tour />
         </ProtectedRoute>
       } />
 

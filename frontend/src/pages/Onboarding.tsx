@@ -255,10 +255,10 @@ export default function Onboarding() {
                 FillIQ is now watching over your classes. Head to the dashboard to see it in action.
               </p>
 
-              <button onClick={() => navigate('/')}
+              <button onClick={() => navigate('/tour')}
                 className="mt-8 inline-flex items-center gap-2 px-8 py-4 rounded-full text-[15px] font-semibold text-white transition-all hover:shadow-lg"
                 style={{ backgroundColor: C.g[800], fontFamily: font.body }}
-              >Go to Dashboard <ArrowRight className="w-4 h-4" /></button>
+              >Connect your system <ArrowRight className="w-4 h-4" /></button>
             </motion.div>
           )}
         </AnimatePresence>
