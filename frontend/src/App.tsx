@@ -19,6 +19,7 @@ import Dashboard from './pages/Dashboard'
 import ChurnPanel from './pages/ChurnPanel'
 import SettingsPage from './pages/Settings'
 import ClassBrief from './pages/ClassBrief'
+import MobileTabBar from './components/MobileTabBar'
 
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
@@ -26,7 +27,7 @@ const C = {
   b: '#E5E5E5',
   w: '#FAFAF8',
 }
-const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
+const font = { display: "'DM Serif Display', serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 function isOnboarded() {
   return localStorage.getItem('filliq_onboarded') === 'true'
@@ -128,7 +129,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
         <AnimatePresence mode="wait">
           <motion.div
             key={window.location.pathname}
@@ -141,6 +142,9 @@ function AppLayout({ children }: { children: React.ReactNode }) {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {/* Mobile Bottom Tab Bar */}
+      <MobileTabBar />
     </div>
   )
 }

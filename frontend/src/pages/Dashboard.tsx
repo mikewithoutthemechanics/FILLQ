@@ -10,7 +10,7 @@ const C = {
   t9: '#0F0F0F', t5: '#6B6B6B', t4: '#8A8A8A',
   bg: '#FAFAF8', bd: '#E5E5E5',
 }
-const ff = { serif: "'DM Serif Display', serif", sans: "'DM Sans', sans-serif" }
+const ff = { serif: "'DM Serif Display', serif", sans: "'General Sans', 'Satoshi', sans-serif" }
 const card: React.CSSProperties = { background: '#fff', borderRadius: 12, border: `1px solid ${C.bd}`, padding: '20px 24px' }
 
 // ── MetricCard ──────────────────────────────────────────

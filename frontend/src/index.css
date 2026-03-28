@@ -5,9 +5,11 @@
 @layer base {
   body {
     @apply antialiased;
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'General Sans', 'Satoshi', -apple-system, sans-serif;
     background-color: #FAFAF8;
     color: #1A1A1A;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 

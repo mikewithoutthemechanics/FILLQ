@@ -51,7 +51,7 @@ export default function ClassBrief() {
   const s = (f: (c: ClassBrief) => number) => classes.reduce((a, c) => a + f(c), 0)
 
   return (
-    <div className="min-h-screen px-4 sm:px-6 py-6 sm:py-8" style={{ background: '#FAFAF8', fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen px-4 sm:px-6 py-6 sm:py-8" style={{ background: '#FAFAF8', fontFamily: "'General Sans', 'Satoshi', sans-serif" }}>
       <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">

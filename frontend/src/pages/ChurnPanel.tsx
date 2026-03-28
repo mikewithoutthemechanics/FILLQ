@@ -140,7 +140,7 @@ export default function ChurnPanel() {
   ]
 
   return (
-    <div className="space-y-6" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="space-y-6" style={{ fontFamily: "'General Sans', 'Satoshi', sans-serif" }}>
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>Churn Panel</h1>

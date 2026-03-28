@@ -11,7 +11,7 @@ const C = {
   b: '#E5E5E5',
   w: '#FAFAF8',
 }
-const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
+const font = { display: "'DM Serif Display', serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 export default function Login() {
   const navigate = useNavigate()

@@ -26,7 +26,7 @@ const C = {
   w: '#FAFAF8',
 }
 
-const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
+const font = { display: "'DM Serif Display', serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 /* ═══════════════════════════════════════════════════════ */
 export default function Landing() {
