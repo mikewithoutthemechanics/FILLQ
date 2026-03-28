@@ -18,7 +18,7 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
   }, [texts.length, interval])
 
   return (
-    <span className={className} style={{ position: 'relative', display: 'inline' }}>
+    <span className={className} style={{ position: 'relative', display: 'inline', whiteSpace: 'nowrap' }}>
       <AnimatePresence mode="popLayout">
         <motion.span
           key={texts[index]}
@@ -34,6 +34,7 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
             color: '#fff',
             boxShadow: '0 2px 12px rgba(212,69,26,0.3)',
             position: 'relative',
+            whiteSpace: 'nowrap',
           }}
         >
           {texts[index]}
