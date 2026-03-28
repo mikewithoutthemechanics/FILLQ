@@ -13,7 +13,7 @@ const C = {
   w: '#FAFAF8',
 }
 
-const font = { display: "'DM Serif Display', serif", body: "'General Sans', 'Satoshi', sans-serif" }
+const font = { display: "'After Regular', 'General Sans', sans-serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 const tabs = [
   { to: '/', icon: LayoutDashboard, label: 'Dashboard' },

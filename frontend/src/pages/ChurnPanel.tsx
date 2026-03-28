@@ -45,7 +45,7 @@ function MemberRow({ member }: { member: ChurnMember }) {
               {initials}
             </div>
             <div className="min-w-0">
-              <h4 className="font-medium text-[#0F0F0F] truncate" style={{ fontFamily: "'DM Serif Display', serif" }}>{member.name}</h4>
+              <h4 className="font-medium text-[#0F0F0F] truncate" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif" }}>{member.name}</h4>
               <p className="text-sm text-[#8A8A8A] truncate">{member.phone}</p>
             </div>
           </div>
@@ -143,7 +143,7 @@ export default function ChurnPanel() {
     <div className="space-y-6" style={{ fontFamily: "'General Sans', 'Satoshi', sans-serif" }}>
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>Churn Panel</h1>
+        <h1 className="text-2xl font-bold text-[#0F0F0F]" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif" }}>Churn Panel</h1>
         <p className="text-[#6B6B6B] mt-1">Members at risk of leaving — last 7 days</p>
       </div>
 
@@ -188,7 +188,7 @@ export default function ChurnPanel() {
       {/* Members List */}
       <div className="bg-white border border-[#E5E5E5] rounded-xl overflow-hidden">
         <div className="px-4 py-3 bg-[#F4F8EF] border-b border-[#E5E5E5]">
-          <h3 className="font-semibold text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>
+          <h3 className="font-semibold text-[#0F0F0F]" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif" }}>
             Members ({filtered.length})
           </h3>
         </div>
@@ -209,7 +209,7 @@ export default function ChurnPanel() {
             <div className="w-16 h-16 bg-[#E8F0DE] rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-8 h-8 text-[#4A7C28]" />
             </div>
-            <h3 className="text-lg font-medium text-[#0F0F0F] mb-2" style={{ fontFamily: "'DM Serif Display', serif" }}>All Clear</h3>
+            <h3 className="text-lg font-medium text-[#0F0F0F] mb-2" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif" }}>All Clear</h3>
             <p className="text-[#6B6B6B]">No at-risk members in the selected filter.</p>
           </div>
         ) : (
@@ -223,7 +223,7 @@ export default function ChurnPanel() {
       <div className="bg-[#F4F8EF] border border-[#E8F0DE] rounded-xl p-4 flex items-start gap-3">
         <Clock className="w-5 h-5 text-[#4A7C28] mt-0.5 shrink-0" />
         <div>
-          <h4 className="font-medium text-[#0F0F0F]" style={{ fontFamily: "'DM Serif Display', serif" }}>About Churn Scoring</h4>
+          <h4 className="font-medium text-[#0F0F0F]" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif" }}>About Churn Scoring</h4>
           <p className="text-sm text-[#6B6B6B] mt-1">
             Scores are updated nightly. Members scoring ≥ 80 are critical, ≥ 65 high risk, ≥ 50 medium.
             Scores factor in attendance patterns, recency, payment history, and app engagement.

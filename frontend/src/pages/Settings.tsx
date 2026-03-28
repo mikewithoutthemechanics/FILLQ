@@ -17,7 +17,7 @@ const C = {
   b: '#E5E5E5',
   w: '#FAFAF8',
 }
-const font = { display: "'DM Serif Display', serif", body: "'General Sans', 'Satoshi', sans-serif" }
+const font = { display: "'After Regular', 'General Sans', sans-serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 function Toggle({ label, desc, checked, onChange }: { label: string; desc: string; checked: boolean; onChange: (v: boolean) => void }) {
   return (
