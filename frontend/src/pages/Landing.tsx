@@ -327,15 +327,12 @@ export default function Landing() {
 
           <div className="mt-16 grid md:grid-cols-3 gap-10">
             {[
-              { n: '01', icon: <Zap className="w-5 h-5" />, title: 'Predict', desc: 'Every booking gets a 0-100 no-show risk score. You know who\'s flaking 3 hours before class.', color: C.g[800] },
-              { n: '02', icon: <MessageCircle className="w-5 h-5" />, title: 'Auto-Fill', desc: 'Spot cancelled? WhatsApp fires instantly to your top 3 waitlist candidates. First reply gets it.', color: C.a[700] },
-              { n: '03', icon: <Shield className="w-5 h-5" />, title: 'Retain', desc: 'Churn radar catches members drifting away. Auto-nudges and rebook invites keep them active.', color: C.g[700] },
+              { n: '01', title: 'Predict', desc: 'Every booking gets a 0-100 no-show risk score. You know who\'s flaking 3 hours before class.', color: C.g[800] },
+              { n: '02', title: 'Auto-Fill', desc: 'Spot cancelled? WhatsApp fires instantly to your top 3 waitlist candidates. First reply gets it.', color: C.a[700] },
+              { n: '03', title: 'Retain', desc: 'Churn radar catches members drifting away. Auto-nudges and rebook invites keep them active.', color: C.g[700] },
             ].map((step, i) => (
               <Reveal key={i} delay={i * 0.12}>
                 <div className="text-[48px] font-bold leading-none mb-5" style={{ color: C.g[200], fontFamily: font.display }}>{step.n}</div>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-4" style={{ backgroundColor: C.g[100], color: step.color }}>
-                  {step.icon}
-                </div>
                 <h3 className="text-[20px] font-semibold mb-2" style={{ fontFamily: font.display }}>{step.title}</h3>
                 <p className="text-[14px] leading-[1.7]" style={{ color: C.t[500], fontFamily: font.body }}>{step.desc}</p>
                 <div className="mt-5 h-[3px] w-10 rounded-full" style={{ backgroundColor: step.color }} />
