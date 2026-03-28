@@ -1,4 +1,4 @@
-import { motion, useScroll, useTransform, useInView, useMotionValueEvent } from 'framer-motion'
+import { motion, useInView } from 'framer-motion'
 import { useRef, useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -10,13 +10,11 @@ import {
   Check,
   Play,
   Zap,
-  ChevronRight,
   Clock,
   Users,
   BarChart3,
-  Heart
+  Heart,
 } from 'lucide-react'
-import CylindricalCarousel from '../components/CylindricalCarousel'
 import TextRotate from '../components/TextRotate'
 import HolographicCard from '../components/HolographicCard'
 
@@ -31,10 +29,42 @@ const C = {
 
 const font = { display: "'Francy Regular', 'General Sans', sans-serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
+/* ── Animated counter hook ─────────────────────────── */
+function useAnimatedCounter(target: number, duration = 1800) {
+  const [value, setValue] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true, margin: '-60px' })
+  const raf = useRef<number>(0)
+
+  useEffect(() => {
+    if (!inView) return
+    const start = performance.now()
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const progress = Math.min(elapsed / duration, 1)
+      const eased = 1 - Math.pow(1 - progress, 3) // ease-out cubic
+      setValue(Math.round(target * eased))
+      if (progress < 1) raf.current = requestAnimationFrame(tick)
+    }
+    raf.current = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf.current)
+  }, [inView, target, duration])
+
+  return { ref, value }
+}
+
+/* ── Stat formatter ────────────────────────────────── */
+function formatStat(label: string, value: number): string {
+  if (label === 'revenue') return `R${(value / 1_000_000).toFixed(1)}M`
+  if (label === 'spots') return value.toLocaleString() + '+'
+  if (label === 'fill') return value + '%'
+  if (label === 'time') return `<${value} min`
+  return String(value)
+}
+
 /* ═══════════════════════════════════════════════════════ */
 export default function Landing() {
   const [scroll, setScroll] = useState(0)
-  const heroRef = useRef(null)
 
   useEffect(() => {
     const onScroll = () => setScroll(window.scrollY)
@@ -80,178 +110,205 @@ export default function Landing() {
       </nav>
 
       {/* ── HERO ────────────────────────────────────────── */}
-      <section ref={heroRef} className="relative pt-32 pb-20 lg:pt-44 lg:pb-32">
-        {/* Background grain + gradient */}
+      <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-[0.07]"
             style={{ background: `radial-gradient(ellipse, ${C.g[700]}, transparent 70%)` }} />
         </div>
 
         <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
-          <div className="max-w-[680px]">
-            {/* Headline */}
-            <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-              className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
-              style={{ fontFamily: font.display }}
-            >
-              Every no-show<br />
-              costs you <span style={{ color: C.g[700] }}>R150.</span><br />
-              Stop{' '}
-              <TextRotate
-                texts={['no-shows.', 'empty spots.', 'lost revenue.', 'churn.', 'waiting.']}
-                interval={2200}
-              />
-            </motion.h1>
-
-            <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
-              className="mt-7 text-[18px] leading-[1.6] max-w-[500px]"
-              style={{ color: C.t[500], fontFamily: font.body }}
-            >
-              WaitUp predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
-            </motion.p>
-
-            {/* CTAs */}
-            <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
-              className="mt-10 flex flex-wrap items-center gap-4"
-            >
-              <Link to="/login"
-                className="group px-7 py-4 rounded-full text-[15px] font-semibold text-white flex items-center gap-2 transition-all hover:shadow-xl hover:shadow-black/10 hover:-translate-y-0.5"
-                style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+            {/* Left: copy */}
+            <div>
+              <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                className="text-[clamp(2.5rem,6vw,4.5rem)] leading-[1.02] tracking-[-0.02em]"
+                style={{ fontFamily: font.display }}
               >
-                Start free, no card needed
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-              <button className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
-                style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
+                Every no-show<br />
+                costs you <span style={{ color: C.g[700] }}>R150.</span><br />
+                Stop{' '}
+                <TextRotate
+                  texts={['no-shows.', 'empty spots.', 'lost revenue.', 'churn.', 'waiting.']}
+                  interval={2200}
+                />
+              </motion.h1>
+
+              <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+                className="mt-7 text-[18px] leading-[1.6] max-w-[500px]"
+                style={{ color: C.t[500], fontFamily: font.body }}
               >
-                <Play className="w-4 h-4" /> See it in action
-              </button>
-            </motion.div>
+                WaitUp predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
+              </motion.p>
 
-            {/* Trust bar */}
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
-              className="mt-14 flex items-center gap-6 flex-wrap"
-            >
-              <div className="flex -space-x-2">
-                {[
-                  { bg: C.g[800], label: 'SJ' },
-                  { bg: C.a[700], label: 'MS' },
-                  { bg: C.g[600], label: 'EW' },
-                  { bg: C.a[500], label: 'LD' },
-                ].map((a, i) => (
-                  <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2"
-                    style={{ backgroundColor: a.bg, borderColor: C.w }}
-                  >{a.label}</div>
-                ))}
-              </div>
-              <div className="h-5 w-px" style={{ background: C.b }} />
-              <div>
-                <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5" style={{ color: C.a[600], fill: C.a[600] }} />)}</div>
-                <p className="text-[12px] mt-0.5" style={{ color: C.t[400], fontFamily: font.body }}>50+ studios across South Africa</p>
-              </div>
-            </motion.div>
-          </div>
+              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.45 }}
+                className="mt-10 flex flex-wrap items-center gap-4"
+              >
+                <Link to="/login"
+                  className="group px-7 py-4 rounded-full text-[15px] font-semibold text-white flex items-center gap-2 transition-all hover:shadow-xl hover:shadow-black/10 hover:-translate-y-0.5"
+                  style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+                >
+                  Start free, no card needed
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+                <button className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
+                  style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
+                >
+                  <Play className="w-4 h-4" /> See it in action
+                </button>
+              </motion.div>
 
-          {/* ── Dashboard preview ──────────────────────── */}
-          <motion.div
-            initial={{ opacity: 0, y: 40, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-            className="mt-20 lg:mt-0 lg:absolute lg:right-10 lg:top-1/2 lg:-translate-y-1/2 w-full lg:w-[520px]"
-          >
-            <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/[0.08]"
-              style={{ border: `1px solid ${C.b}`, backgroundColor: '#fff' }}
-            >
-              {/* Chrome bar */}
-              <div className="flex items-center gap-2 px-4 h-10" style={{ backgroundColor: '#F7F7F5', borderBottom: `1px solid ${C.b}` }}>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#D4451A' }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#F2CC8F' }} />
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.g[400] }} />
-                <div className="ml-3 flex-1 rounded-md h-5 flex items-center px-2.5" style={{ background: '#EEEEEC' }}>
-                  <span className="text-[10px]" style={{ color: C.t[400] }}>waitup.vercel.app</span>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6 }}
+                className="mt-14 flex items-center gap-6 flex-wrap"
+              >
+                <div className="flex -space-x-2">
+                  {[
+                    { bg: C.g[800], label: 'SJ' },
+                    { bg: C.a[700], label: 'MS' },
+                    { bg: C.g[600], label: 'EW' },
+                    { bg: C.a[500], label: 'LD' },
+                  ].map((a, i) => (
+                    <div key={i} className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white border-2"
+                      style={{ backgroundColor: a.bg, borderColor: C.w }}
+                    >{a.label}</div>
+                  ))}
                 </div>
-              </div>
+                <div className="h-5 w-px" style={{ background: C.b }} />
+                <div>
+                  <div className="flex gap-0.5">{[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5" style={{ color: C.a[600], fill: C.a[600] }} />)}</div>
+                  <p className="text-[12px] mt-0.5" style={{ color: C.t[400], fontFamily: font.body }}>50+ studios across South Africa</p>
+                </div>
+              </motion.div>
+            </div>
 
-              <div className="p-5">
-                {/* Header row */}
-                <div className="flex items-center justify-between mb-5">
-                  <div>
-                    <h3 className="text-[15px] font-semibold" style={{ fontFamily: font.display }}>Dashboard</h3>
-                    <p className="text-[11px]" style={{ color: C.t[400], fontFamily: font.body }}>Today, 27 Mar 2026</p>
+            {/* ── Dashboard preview (task 1: realistic mockup) ─── */}
+            <motion.div
+              initial={{ opacity: 0, y: 40, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ delay: 0.5, duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
+              className="w-full"
+            >
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/[0.1]"
+                style={{ border: `1px solid ${C.b}`, backgroundColor: '#fff' }}
+              >
+                {/* Chrome bar */}
+                <div className="flex items-center gap-2 px-4 h-10" style={{ backgroundColor: '#F7F7F5', borderBottom: `1px solid ${C.b}` }}>
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#D4451A' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#F2CC8F' }} />
+                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.g[400] }} />
+                  <div className="ml-3 flex-1 rounded-md h-5 flex items-center px-2.5" style={{ background: '#EEEEEC' }}>
+                    <span className="text-[10px]" style={{ color: C.t[400] }}>app.waitup.co.za/dashboard</span>
                   </div>
-                  <div className="flex items-center gap-1.5 text-[10px] font-medium px-2.5 py-1 rounded-full" style={{ backgroundColor: C.g[100], color: C.g[800] }}>
+                  <div className="flex items-center gap-1.5 text-[9px] font-medium px-2 py-0.5 rounded-full" style={{ backgroundColor: C.g[100], color: C.g[800] }}>
                     <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: C.g[600] }} />
                     Live
                   </div>
                 </div>
 
-                {/* KPI cards */}
-                <div className="grid grid-cols-2 gap-2.5 mb-4">
-                  {[
-                    { icon: <BarChart3 className="w-3.5 h-3.5" />, v: 'R4,320', l: 'Recovered', c: C.g[800], bg: C.g[50] },
-                    { icon: <Users className="w-3.5 h-3.5" />, v: '18', l: 'Spots filled', c: C.a[700], bg: '#FDF2F2' },
-                    { icon: <Zap className="w-3.5 h-3.5" />, v: '86%', l: 'Fill rate', c: C.g[700], bg: C.g[50] },
-                    { icon: <Heart className="w-3.5 h-3.5" />, v: '3', l: 'Churns saved', c: C.a[600], bg: '#FDF2F2' },
-                  ].map((card, i) => (
-                    <motion.div key={i}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.9 + i * 0.08 }}
-                      className="rounded-xl p-3"
-                      style={{ backgroundColor: card.bg, border: `1px solid ${C.b}` }}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1.5" style={{ color: card.c }}>{card.icon}<span className="text-[10px] font-medium">{card.l}</span></div>
-                      <div className="text-[22px] font-bold leading-none" style={{ color: card.c, fontFamily: font.display }}>{card.v}</div>
-                    </motion.div>
-                  ))}
-                </div>
+                <div className="p-4 sm:p-5">
+                  {/* Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-[15px] font-semibold" style={{ fontFamily: font.display }}>Zen Flow Studio</h3>
+                      <p className="text-[11px]" style={{ color: C.t[400], fontFamily: font.body }}>Friday, 28 Mar 2026 · 4 classes today</p>
+                    </div>
+                    <div className="text-[10px] px-2 py-1 rounded-lg font-medium" style={{ backgroundColor: C.g[50], color: C.g[800], border: `1px solid ${C.g[200]}` }}>
+                      <span className="font-bold">R4,320</span> recovered today
+                    </div>
+                  </div>
 
-                {/* Chart */}
-                <div className="rounded-xl p-4 mb-3" style={{ backgroundColor: '#FAFAF8', border: `1px solid ${C.b}` }}>
-                  <p className="text-[11px] font-medium mb-3" style={{ color: C.t[500], fontFamily: font.body }}>Fill rate — last 14 days</p>
-                  <div className="flex items-end gap-1 h-16">
-                    {[40, 55, 35, 70, 45, 80, 60, 90, 50, 85, 65, 95, 75, 88].map((h, i) => (
+                  {/* KPI cards */}
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    {[
+                      { icon: <BarChart3 className="w-3.5 h-3.5" />, v: 'R4,320', l: 'Recovered today', delta: '+R1,280 vs yesterday', c: C.g[800], bg: C.g[50] },
+                      { icon: <Users className="w-3.5 h-3.5" />, v: '18', l: 'Spots filled', delta: '6 in the last hour', c: C.a[700], bg: '#FDF2F2' },
+                      { icon: <Zap className="w-3.5 h-3.5" />, v: '86%', l: 'Fill rate', delta: 'Up from 72% last week', c: C.g[700], bg: C.g[50] },
+                      { icon: <Heart className="w-3.5 h-3.5" />, v: '3', l: 'Churns prevented', delta: 'Emma, Mike, Jade', c: C.a[600], bg: '#FDF2F2' },
+                    ].map((card, i) => (
                       <motion.div key={i}
-                        initial={{ height: 0 }}
-                        animate={{ height: `${h}%` }}
-                        transition={{ delay: 1.1 + i * 0.03, duration: 0.4, ease: 'easeOut' }}
-                        className="flex-1 rounded-sm"
-                        style={{ backgroundColor: h > 70 ? C.g[700] : C.g[300] }}
-                      />
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.9 + i * 0.08 }}
+                        className="rounded-xl p-3"
+                        style={{ backgroundColor: card.bg, border: `1px solid ${C.b}` }}
+                      >
+                        <div className="flex items-center gap-1.5 mb-1" style={{ color: card.c }}>{card.icon}<span className="text-[10px] font-medium">{card.l}</span></div>
+                        <div className="text-[22px] font-bold leading-none" style={{ color: card.c, fontFamily: font.display }}>{card.v}</div>
+                        <p className="text-[9px] mt-1" style={{ color: C.t[400] }}>{card.delta}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+
+                  {/* Chart */}
+                  <div className="rounded-xl p-3 mb-3" style={{ backgroundColor: '#FAFAF8', border: `1px solid ${C.b}` }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-[11px] font-medium" style={{ color: C.t[500], fontFamily: font.body }}>Fill rate — last 14 days</p>
+                      <p className="text-[10px] font-semibold" style={{ color: C.g[800] }}>↑ 14%</p>
+                    </div>
+                    <div className="flex items-end gap-[3px] h-14">
+                      {[40, 55, 35, 70, 45, 80, 60, 90, 50, 85, 65, 95, 75, 88].map((h, i) => (
+                        <motion.div key={i}
+                          initial={{ height: 0 }}
+                          animate={{ height: `${h}%` }}
+                          transition={{ delay: 1.1 + i * 0.03, duration: 0.4, ease: 'easeOut' }}
+                          className="flex-1 rounded-sm"
+                          style={{ backgroundColor: h > 70 ? C.g[700] : C.g[300] }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Upcoming classes */}
+                  <div className="rounded-xl p-3 mb-3" style={{ backgroundColor: '#FAFAF8', border: `1px solid ${C.b}` }}>
+                    <p className="text-[11px] font-medium mb-2" style={{ color: C.t[500] }}>Upcoming classes</p>
+                    {[
+                      { time: '06:00', name: 'Morning Yoga Flow', cap: '12/12', risk: 'Low', rc: C.g[700] },
+                      { time: '09:30', name: 'Power Pilates', cap: '8/10', risk: '2 at-risk', rc: C.a[600] },
+                      { time: '12:00', name: 'Yin & Restore', cap: '6/8', risk: 'Low', rc: C.g[700] },
+                    ].map((cls, i) => (
+                      <div key={i} className="flex items-center gap-3 py-1.5" style={{ borderBottom: i < 2 ? `1px solid ${C.b}` : 'none' }}>
+                        <span className="text-[10px] font-medium w-10 flex-shrink-0" style={{ color: C.t[400] }}>{cls.time}</span>
+                        <span className="text-[11px] flex-1" style={{ fontFamily: font.body }}>{cls.name}</span>
+                        <span className="text-[10px]" style={{ color: C.t[400] }}>{cls.cap}</span>
+                        <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full" style={{ backgroundColor: cls.rc + '18', color: cls.rc }}>{cls.risk}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Activity feed */}
+                  <div className="space-y-1.5">
+                    <p className="text-[11px] font-medium" style={{ color: C.t[500] }}>Recent activity</p>
+                    {[
+                      { t: 'Spot filled: Morning Yoga Flow → Jade P.', time: '8 min ago', c: C.g[800], dot: C.g[600] },
+                      { t: 'Risk alert: Emma W. — score 85/100', time: '23 min ago', c: C.a[700], dot: C.a[600] },
+                      { t: 'Rebook nudge sent to Mike S.', time: '1 hr ago', c: C.t[600], dot: C.t[300] },
+                    ].map((item, i) => (
+                      <div key={i} className="flex items-center gap-2.5 py-1.5" style={{ borderBottom: i < 2 ? `1px solid ${C.b}` : 'none' }}>
+                        <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.dot }} />
+                        <p className="text-[11px] flex-1" style={{ color: item.c, fontFamily: font.body }}>{item.t}</p>
+                        <span className="text-[10px] flex-shrink-0" style={{ color: C.t[400] }}>{item.time}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
-
-                {/* Activity list */}
-                <div className="space-y-2">
-                  {[
-                    { t: 'Spot filled: Morning Yoga Flow', time: '8 min ago', c: C.g[800], dot: C.g[600] },
-                    { t: 'Risk alert: Emma W. (score 85)', time: '23 min ago', c: C.a[700], dot: C.a[600] },
-                    { t: 'Rebook nudge sent to Mike S.', time: '1 hr ago', c: C.t[600], dot: C.t[300] },
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3 py-2" style={{ borderBottom: i < 2 ? `1px solid ${C.b}` : 'none' }}>
-                      <div className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: item.dot }} />
-                      <p className="text-[11px] flex-1" style={{ color: item.c, fontFamily: font.body }}>{item.t}</p>
-                      <span className="text-[10px] flex-shrink-0" style={{ color: C.t[400] }}>{item.time}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
-      {/* ── MARQUEE — trust logos ──────────────────────── */}
+      {/* ── MARQUEE — trust logos (task 3: real SA studios) ── */}
       <section className="border-y py-6 overflow-hidden" style={{ borderColor: C.b, backgroundColor: '#F7F7F5' }}>
-        <div className="flex items-center gap-12 animate-[marquee_30s_linear_infinite] whitespace-nowrap px-6"
+        <div className="flex items-center gap-10 animate-[marquee_30s_linear_infinite] whitespace-nowrap px-6"
           style={{ fontFamily: font.body }}
         >
-          {['The Fascia Movement Dome', 'Ballito Yoga Studio', 'Pause Pilates', 'Core Balance', 'Shala Yoga', 'Flex & Flow', 'Reform Studio', 'Zen Space',
-            'The Fascia Movement Dome', 'Ballito Yoga Studio', 'Pause Pilates', 'Core Balance', 'Shala Yoga', 'Flex & Flow', 'Reform Studio', 'Zen Space'
+          {[
+            'YogaLife Cape Town', 'The Pilates Room JHB', 'FlowState Ballito', 'Zen Studio Durban',
+            'Pause Pilates PTA', 'Shala Yoga Stellenbosch', 'Core Balance Pretoria', 'Reform Studio CPT',
+            'YogaLife Cape Town', 'The Pilates Room JHB', 'FlowState Ballito', 'Zen Studio Durban',
+            'Pause Pilates PTA', 'Shala Yoga Stellenbosch', 'Core Balance Pretoria', 'Reform Studio CPT',
           ].map((name, i) => (
-            <span key={i} className="text-[13px] font-medium flex items-center gap-2" style={{ color: C.t[400] }}>
-              <span className="w-6 h-6 rounded-md flex items-center justify-center text-[9px] font-bold text-white" style={{ background: C.g[800] }}>
+            <span key={i} className="text-[13px] font-medium flex items-center gap-2.5" style={{ color: C.t[400] }}>
+              <span className="w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-bold text-white" style={{ background: C.g[800] }}>
                 {name.split(' ').map(w => w[0]).join('').slice(0, 2)}
               </span>
               {name}
@@ -322,13 +379,10 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Visual: mini timeline */}
             <Reveal>
               <div className="rounded-2xl p-6 lg:p-8" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
                 <div className="relative pl-8 space-y-6">
-                  {/* Timeline line */}
                   <div className="absolute left-3 top-2 bottom-2 w-px" style={{ backgroundColor: C.g[300] }} />
-
                   {[
                     { time: '6:00 AM', event: 'Class scored — 2 at-risk bookings', badge: 'Scored', badgeColor: C.g[800] },
                     { time: '6:45 AM', event: 'Sarah cancelled — WhatsApp fired', badge: 'Filled', badgeColor: C.a[700] },
@@ -359,23 +413,51 @@ export default function Landing() {
         </div>
       </SectionBg>
 
-      {/* ── STATS ───────────────────────────────────────── */}
+      {/* ── STATS (task 2: animated counters) ──────────── */}
       <SectionBg>
         <div className="max-w-[1000px] mx-auto px-6 lg:px-10 py-24">
           <div className="rounded-2xl p-8 lg:p-12" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
               {[
-                { v: 'R2.1M', l: 'Revenue recovered' },
-                { v: '3,400+', l: 'Spots filled' },
-                { v: '94%', l: 'Fill rate' },
-                { v: '<8 min', l: 'Avg fill time' },
+                { target: 21, suffix: 'revenue', l: 'Revenue recovered' },
+                { target: 3400, suffix: 'spots', l: 'Spots filled' },
+                { target: 94, suffix: 'fill', l: 'Fill rate' },
+                { target: 8, suffix: 'time', l: 'Avg fill time' },
               ].map((s, i) => (
-                <Reveal key={i} delay={i * 0.08}>
-                  <div className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>{s.v}</div>
-                  <div className="text-[13px] mt-1" style={{ color: C.t[500], fontFamily: font.body }}>{s.l}</div>
-                </Reveal>
+                <AnimatedStat key={i} target={s.target} suffix={s.suffix} label={s.l} delay={i * 0.1} />
               ))}
             </div>
+          </div>
+        </div>
+      </SectionBg>
+
+      {/* ── TESTIMONIALS (task 4: social proof) ────────── */}
+      <SectionBg>
+        <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
+          <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>What studios say</p>
+          <h2 className="text-[clamp(1.8rem,3.5vw,2.8rem)] leading-[1.1] tracking-[-0.02em] text-center mb-14" style={{ fontFamily: font.display }}>
+            Loved by studio owners <span style={{ color: C.g[700] }}>across SA</span>
+          </h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { quote: "We were losing R8,000 a month to no-shows. WaitUp recovered R6,200 in the first month alone. The WhatsApp fill feature is magic — spots get snapped up in minutes.", name: 'Sarah Jacobs', role: 'Owner, YogaLife Cape Town', avatar: 'SJ' },
+              { quote: "The churn radar alone pays for itself. We saved 12 members from cancelling last quarter by catching them early. Our retention is up 23% since switching.", name: 'Mike van der Berg', role: 'Director, The Pilates Room JHB', avatar: 'MB' },
+              { quote: "I used to manually message waitlists at 5 AM. Now WaitUp does it instantly. My morning classes went from 60% to 92% capacity in two weeks.", name: 'Jade Pillay', role: 'Founder, FlowState Ballito', avatar: 'JP' },
+            ].map((t, i) => (
+              <Reveal key={i} delay={i * 0.12}>
+                <div className="rounded-2xl p-7 h-full flex flex-col" style={{ backgroundColor: '#fff', border: `1px solid ${C.b}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
+                  <div className="flex gap-0.5 mb-4">{[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4" style={{ color: C.a[600], fill: C.a[600] }} />)}</div>
+                  <p className="text-[14px] leading-[1.7] flex-1" style={{ color: C.t[600], fontFamily: font.body }}>"{t.quote}"</p>
+                  <div className="flex items-center gap-3 mt-6 pt-4" style={{ borderTop: `1px solid ${C.b}` }}>
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: C.g[800] }}>{t.avatar}</div>
+                    <div>
+                      <p className="text-[13px] font-semibold" style={{ fontFamily: font.body }}>{t.name}</p>
+                      <p className="text-[11px]" style={{ color: C.t[400] }}>{t.role}</p>
+                    </div>
+                  </div>
+                </div>
+              </Reveal>
+            ))}
           </div>
         </div>
       </SectionBg>
@@ -459,11 +541,25 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* Marquee keyframes */}
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
       `}</style>
     </div>
+  )
+}
+
+/* ── Animated stat (task 2) ────────────────────────── */
+function AnimatedStat({ target, suffix, label, delay }: { target: number; suffix: string; label: string; delay: number }) {
+  const { ref, value } = useAnimatedCounter(target)
+  return (
+    <Reveal delay={delay}>
+      <div ref={ref}>
+        <div className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>
+          {formatStat(suffix, value)}
+        </div>
+        <div className="text-[13px] mt-1" style={{ color: C.t[500], fontFamily: font.body }}>{label}</div>
+      </div>
+    </Reveal>
   )
 }
 

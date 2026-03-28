@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   MessageSquare,
   Bell,
@@ -116,6 +116,29 @@ export default function SettingsPage() {
 
   return (
     <div className="max-w-3xl space-y-6">
+      {/* Toast notification */}
+      <AnimatePresence>
+        {saved && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: 'spring', stiffness: 400, damping: 25 }}
+            className="fixed top-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-lg"
+            style={{ backgroundColor: C.g[800], color: '#fff', fontFamily: font.body }}
+          >
+            <motion.div
+              initial={{ scale: 0, rotate: -90 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 20, delay: 0.1 }}
+            >
+              <CheckCircle className="w-5 h-5" />
+            </motion.div>
+            <span className="text-[14px] font-medium">Settings saved</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -127,7 +150,7 @@ export default function SettingsPage() {
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-[13px] font-semibold text-white transition-all disabled:opacity-50"
           style={{ backgroundColor: C.g[800], fontFamily: font.body }}
         >
-          {saving ? 'Saving...' : saved ? <><CheckCircle className="w-4 h-4" /> Saved</> : <><Save className="w-4 h-4" /> Save</>}
+          {saving ? 'Saving...' : <><Save className="w-4 h-4" /> Save</>}
         </motion.button>
       </div>
 

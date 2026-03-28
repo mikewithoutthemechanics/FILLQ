@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { TrendingUp, Mail, Lock, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { TrendingUp, Mail, Lock, Eye, EyeOff, ArrowRight, CheckCircle } from 'lucide-react'
 import { supabase } from '../hooks/useSupabase'
 
 const C = {
@@ -21,6 +21,26 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [resetting, setResetting] = useState(false)
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      setError('Enter your email above first, then click "Forgot password?"')
+      return
+    }
+    setResetting(true)
+    setError('')
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email)
+      if (error) throw error
+      setResetSent(true)
+    } catch (err: any) {
+      setError(err.message || 'Could not send reset email')
+    } finally {
+      setResetting(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -183,10 +203,24 @@ export default function Login() {
             {/* Forgot */}
             {!isSignUp && (
               <div className="flex justify-end">
-                <button type="button" className="text-[12px] transition-colors" style={{ color: C.g[700], fontFamily: font.body }}>
-                  Forgot password?
+                <button type="button" onClick={handleForgotPassword} disabled={resetting}
+                  className="text-[12px] transition-colors disabled:opacity-50"
+                  style={{ color: C.g[700], fontFamily: font.body }}
+                >
+                  {resetting ? 'Sending...' : 'Forgot password?'}
                 </button>
               </div>
+            )}
+
+            {/* Reset success */}
+            {resetSent && (
+              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
+                className="p-3.5 rounded-xl text-[13px] flex items-center gap-2"
+                style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}`, color: C.g[800], fontFamily: font.body }}
+              >
+                <CheckCircle className="w-4 h-4 flex-shrink-0" />
+                Password reset link sent. Check your email.
+              </motion.div>
             )}
 
             {/* Submit */}

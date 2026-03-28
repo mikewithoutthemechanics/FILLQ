@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '../hooks/useSupabase'
 import { TrendingUp, Users, Shield, RefreshCw, AlertTriangle, Calendar } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { motion, AnimatePresence } from 'framer-motion'
 
 // ── Colors ──────────────────────────────────────────────
 const C = {
@@ -76,6 +77,8 @@ export default function Dashboard() {
   const [classes, setClasses] = useState<ClassWithRisk[]>([])
   const [chart, setChart] = useState<{ date: string; count: number }[]>([])
   const [loading, setLoading] = useState(true)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [tick, setTick] = useState(0)
 
   async function load() {
     setLoading(true)
@@ -122,100 +125,171 @@ export default function Dashboard() {
     chartFills?.forEach(r => { const d = r.created_at.slice(0, 10); if (buckets[d] !== undefined) buckets[d]++ })
     setChart(Object.entries(buckets).map(([date, count]) => ({ date, count })))
 
+    setLastUpdated(new Date())
     setLoading(false)
   }
 
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    load()
+    const interval = setInterval(load, 60000)
+    return () => clearInterval(interval)
+  }, [])
 
-  return (
-    <div style={{ background: C.bg, minHeight: '100vh', padding: '24px 20px 48px', fontFamily: ff.sans }}>
-      {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 24, fontWeight: 700, color: C.t9, margin: 0, fontFamily: ff.serif }}>Dashboard</h1>
-          <p style={{ fontSize: 14, color: C.t5, margin: '4px 0 0' }}>Revenue recovery &amp; no-show prevention</p>
+  // Re-render "X ago" every 10 seconds
+  useEffect(() => {
+    const t = setInterval(() => setTick(v => v + 1), 10000)
+    return () => clearInterval(t)
+  }, [])
+
+  function timeAgo(date: Date): string {
+    const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
+    if (seconds < 10) return 'just now'
+    if (seconds < 60) return `${seconds}s ago`
+    const minutes = Math.floor(seconds / 60)
+    return `${minutes}m ago`
+  }
+
+  // Skeleton bar helper
+  const skBar = (h: number, w: string | number = '100%', mb = 12) => (
+    <div className="animate-pulse" style={{ height: h, width: typeof w === 'number' ? `${w}px` : w, backgroundColor: '#E5E5E5', borderRadius: 8, marginBottom: mb }} />
+  )
+
+  // Full-page loading skeleton on initial load
+  const skeleton = loading && !lastUpdated ? (
+    <motion.div key="skeleton" initial={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+      <div style={{ background: C.bg, minHeight: '100vh', padding: '24px 20px 48px', fontFamily: ff.sans }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28 }}>
+          <div>{skBar(24, 140, 8)}{skBar(14, 220, 0)}</div>
+          {skBar(36, 100, 0)}
         </div>
-        <button onClick={load} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, cursor: 'pointer', fontFamily: ff.sans }}>
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
-
-      {/* Metrics */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
-        <MetricCard title="Revenue Recovered" value={`R${revenue.toLocaleString()}`} sub="from filled waitlist spots" icon={TrendingUp} accent="g" />
-        <MetricCard title="Spots Filled" value={spotsFilled.toString()} sub="last 30 days" icon={Users} accent="g" />
-        <MetricCard title="Fill Rate" value={`${fillRate}%`} sub="of available spots" icon={TrendingUp} accent="b" />
-        <MetricCard title="At-Risk Members" value={atRisk.toString()} sub="churn score ≥ 65" icon={Shield} accent="r" />
-      </div>
-
-      {/* Chart + Activity grid */}
-      <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginBottom: 28 }}>
-        {loading ? <div style={{ ...card, height: 260, background: '#F3F4F6' }} /> : <FillChart data={chart} />}
-
-        <div style={card}>
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: C.t9, margin: '0 0 14px', fontFamily: ff.serif }}>Recent Activity</h3>
-          {loading ? [1,2,3].map(i => <div key={i} style={{ height: 14, background: '#F3F4F6', borderRadius: 4, marginBottom: 12 }} />) :
-           events.length === 0 ? <p style={{ fontSize: 13, color: C.t4 }}>No recent fill events</p> :
-           events.map(ev => (
-            <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: `1px solid ${C.bd}` }}>
-              <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: ev.filled ? C.gM : C.t4 }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 13, fontWeight: 500, color: C.t9, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {ev.class_name || `Class ${ev.class_id?.slice(0, 8)}`}
-                </p>
-                <p style={{ fontSize: 11, color: C.t4, margin: '2px 0 0' }}>
-                  {new Date(ev.created_at).toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </p>
-              </div>
-              {ev.filled
-                ? <span style={{ fontSize: 11, fontWeight: 600, color: C.gD, background: C.gP, padding: '2px 8px', borderRadius: 4 }}>Filled</span>
-                : <span style={{ fontSize: 11, color: C.t5, background: '#F3F4F6', padding: '2px 8px', borderRadius: 4 }}>Pending</span>}
-            </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} style={card}>{skBar(12, 100, 10)}{skBar(28, 80, 6)}{skBar(12, 140, 0)}</div>
           ))}
         </div>
-      </div>
-
-      {/* Today's Classes */}
-      <div style={card}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-          <Calendar size={18} color={C.gM} />
-          <h3 style={{ fontSize: 16, fontWeight: 600, color: C.t9, margin: 0, fontFamily: ff.serif }}>Today's Classes</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginBottom: 28 }}>
+          <div style={card}>{skBar(16, 180, 8)}{skBar(12, 160, 20)}{skBar(220, '100%', 0)}</div>
+          <div style={card}>
+            {skBar(16, 140, 16)}
+            {[1, 2, 3, 4].map(i => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: `1px solid ${C.bd}` }}>
+                <div className="animate-pulse" style={{ width: 8, height: 8, borderRadius: '50%', backgroundColor: '#E5E5E5' }} />
+                <div style={{ flex: 1 }}>{skBar(13, '70%', 4)}{skBar(11, '40%', 0)}</div>
+              </div>
+            ))}
+          </div>
         </div>
-        {loading ? <div style={{ height: 14, background: '#F3F4F6', borderRadius: 4, width: '60%' }} /> :
-         classes.length === 0 ? <p style={{ fontSize: 13, color: C.t4 }}>No classes scheduled today</p> :
-         <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: `1px solid ${C.bd}` }}>
-                <th style={{ textAlign: 'left', padding: '8px 8px 8px 0', color: C.t5, fontWeight: 500 }}>Class</th>
-                <th style={{ textAlign: 'left', padding: 8, color: C.t5, fontWeight: 500 }}>Time</th>
-                <th style={{ textAlign: 'right', padding: '8px 0 8px 8px', color: C.t5, fontWeight: 500 }}>Risk</th>
-              </tr>
-            </thead>
-            <tbody>
-              {classes.map(c => {
-                const b = riskBadge(c.risk_score)
-                return (
-                  <tr key={c.id} style={{ borderBottom: `1px solid ${C.bd}` }}>
-                    <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: C.t9 }}>{c.name}</td>
-                    <td style={{ padding: 10, color: C.t5 }}>{new Date(c.starts_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</td>
-                    <td style={{ padding: '10px 0 10px 8px', textAlign: 'right' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: b.bg, color: b.color }}>
-                        {c.risk_score !== null && c.risk_score >= 50 && <AlertTriangle size={12} style={{ marginRight: 4, verticalAlign: -1 }} />}
-                        {b.label}
-                      </span>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
-         </div>
-        }
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>{skBar(16, 140, 0)}</div>
+          {skBar(14, '60%', 0)}
+        </div>
       </div>
+    </motion.div>
+  ) : null
 
-      {/* Responsive override */}
-      <style>{`@media (min-width:768px){.dash-grid{grid-template-columns:2fr 1fr !important}}`}</style>
-    </div>
+  const content = !loading || lastUpdated ? (
+    <motion.div key="content" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+      <div style={{ background: C.bg, minHeight: '100vh', padding: '24px 20px 48px', fontFamily: ff.sans }}>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 28, flexWrap: 'wrap', gap: 12 }}>
+          <div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: C.t9, margin: 0, fontFamily: ff.serif }}>Dashboard</h1>
+            <p style={{ fontSize: 14, color: C.t5, margin: '4px 0 0' }}>Revenue recovery &amp; no-show prevention</p>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            {lastUpdated && (
+              <span style={{ fontSize: 12, color: C.t4, fontFamily: ff.sans }}>
+                Updated {timeAgo(lastUpdated)}
+              </span>
+            )}
+            <button onClick={load} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, cursor: 'pointer', fontFamily: ff.sans }}>
+              <RefreshCw size={14} /> Refresh
+            </button>
+          </div>
+        </div>
+
+        {/* Metrics */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 16, marginBottom: 28 }}>
+          <MetricCard title="Revenue Recovered" value={`R${revenue.toLocaleString()}`} sub="from filled waitlist spots" icon={TrendingUp} accent="g" />
+          <MetricCard title="Spots Filled" value={spotsFilled.toString()} sub="last 30 days" icon={Users} accent="g" />
+          <MetricCard title="Fill Rate" value={`${fillRate}%`} sub="of available spots" icon={TrendingUp} accent="b" />
+          <MetricCard title="At-Risk Members" value={atRisk.toString()} sub="churn score ≥ 65" icon={Shield} accent="r" />
+        </div>
+
+        {/* Chart + Activity grid */}
+        <div className="dash-grid" style={{ display: 'grid', gridTemplateColumns: '1fr', gap: 20, marginBottom: 28 }}>
+          <FillChart data={chart} />
+
+          <div style={card}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: C.t9, margin: '0 0 14px', fontFamily: ff.serif }}>Recent Activity</h3>
+            {events.length === 0 ? <p style={{ fontSize: 13, color: C.t4 }}>No recent fill events</p> :
+             events.map(ev => (
+              <div key={ev.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: `1px solid ${C.bd}` }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', flexShrink: 0, background: ev.filled ? C.gM : C.t4 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: C.t9, margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {ev.class_name || `Class ${ev.class_id?.slice(0, 8)}`}
+                  </p>
+                  <p style={{ fontSize: 11, color: C.t4, margin: '2px 0 0' }}>
+                    {new Date(ev.created_at).toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                </div>
+                {ev.filled
+                  ? <span style={{ fontSize: 11, fontWeight: 600, color: C.gD, background: C.gP, padding: '2px 8px', borderRadius: 4 }}>Filled</span>
+                  : <span style={{ fontSize: 11, color: C.t5, background: '#F3F4F6', padding: '2px 8px', borderRadius: 4 }}>Pending</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Today's Classes */}
+        <div style={card}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+            <Calendar size={18} color={C.gM} />
+            <h3 style={{ fontSize: 16, fontWeight: 600, color: C.t9, margin: 0, fontFamily: ff.serif }}>Today's Classes</h3>
+          </div>
+          {classes.length === 0 ? <p style={{ fontSize: 13, color: C.t4 }}>No classes scheduled today</p> :
+           <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ borderBottom: `1px solid ${C.bd}` }}>
+                  <th style={{ textAlign: 'left', padding: '8px 8px 8px 0', color: C.t5, fontWeight: 500 }}>Class</th>
+                  <th style={{ textAlign: 'left', padding: 8, color: C.t5, fontWeight: 500 }}>Time</th>
+                  <th style={{ textAlign: 'right', padding: '8px 0 8px 8px', color: C.t5, fontWeight: 500 }}>Risk</th>
+                </tr>
+              </thead>
+              <tbody>
+                {classes.map(c => {
+                  const b = riskBadge(c.risk_score)
+                  return (
+                    <tr key={c.id} style={{ borderBottom: `1px solid ${C.bd}` }}>
+                      <td style={{ padding: '10px 8px 10px 0', fontWeight: 500, color: C.t9 }}>{c.name}</td>
+                      <td style={{ padding: 10, color: C.t5 }}>{new Date(c.starts_at).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</td>
+                      <td style={{ padding: '10px 0 10px 8px', textAlign: 'right' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, padding: '3px 10px', borderRadius: 6, background: b.bg, color: b.color }}>
+                          {c.risk_score !== null && c.risk_score >= 50 && <AlertTriangle size={12} style={{ marginRight: 4, verticalAlign: -1 }} />}
+                          {b.label}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+           </div>
+          }
+        </div>
+
+        {/* Responsive override */}
+        <style>{`@media (min-width:768px){.dash-grid{grid-template-columns:2fr 1fr !important}}`}</style>
+      </div>
+    </motion.div>
+  ) : null
+
+  return (
+    <AnimatePresence mode="wait">
+      {skeleton}
+      {content}
+    </AnimatePresence>
   )
 }

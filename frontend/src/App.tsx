@@ -142,10 +142,10 @@ function AppLayout({ children }: { children: React.ReactNode }) {
         <AnimatePresence mode="wait">
           <motion.div
             key={window.location.pathname}
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.3 }}
+            initial={{ opacity: 0, scale: 0.99 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.01 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
           >
             {children}
           </motion.div>

@@ -238,6 +238,12 @@ export default function Onboarding() {
                 >
                   {loading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Finish setup →'}
                 </button>
+                <button onClick={handleFinish} disabled={loading}
+                  className="px-6 py-3.5 rounded-xl text-[14px] font-medium transition-all"
+                  style={{ border: `1.5px solid ${C.b}`, color: C.t[500], fontFamily: font.body }}
+                >
+                  Skip
+                </button>
               </div>
             </motion.div>
           )}
