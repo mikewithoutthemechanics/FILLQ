@@ -40,6 +40,7 @@ const INTEGRATIONS = [
   { id: 'vagaro', name: 'Vagaro', desc: 'Budget-friendly scheduling', logo: '📅', tier: 2, api: true },
   { id: 'google_sheets', name: 'Google Sheets', desc: 'Sync classes & bookings from a spreadsheet', logo: '📊', tier: 3, api: true },
   { id: 'excel', name: 'Excel / CSV', desc: 'Upload an Excel or CSV file', logo: '📁', tier: 3, api: false },
+  { id: 'whatsapp_intake', name: 'WhatsApp Booking', desc: 'Clients book by texting your WhatsApp — we parse it automatically', logo: '💬', tier: 1, api: true, highlight: true },
 ]
 
 const TOUR_STEPS = [
@@ -98,6 +99,19 @@ export default function Tour() {
       }).eq('studio_id', studioId || 'default-studio')
     } else if (selectedIntegration === 'excel') {
       // CSV/Excel upload — just mark as connected
+    } else if (selectedIntegration === 'whatsapp_intake') {
+      // Provision WhatsApp node
+      try {
+        const { data } = await supabase.functions.invoke('provision-whatsapp', {
+          body: { studio_id: studioId, studio_name: localStorage.getItem('filliq_studio_name') }
+        })
+        if (data?.pairing_url) {
+          // Store the pairing info
+          localStorage.setItem('filliq_whatsapp_pairing', data.pairing_url)
+        }
+      } catch (e) {
+        console.error('Provision error:', e)
+      }
     } else {
       // API-based integration
       await supabase.from('filliq_settings').update({
@@ -226,7 +240,39 @@ export default function Tour() {
               </div>
             )}
 
-            {selected?.api && selectedIntegration !== 'google_sheets' && selectedIntegration !== 'excel' && (
+            {selectedIntegration === 'whatsapp_intake' && (
+              <div className="space-y-5">
+                <div className="rounded-xl p-5" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
+                  <p className="text-[14px] font-semibold mb-2" style={{ fontFamily: font.display }}>How it works</p>
+                  <div className="space-y-3">
+                    {[
+                      'Client texts your WhatsApp: "Can I book yoga tomorrow at 9am?"',
+                      'FillIQ parses the message — extracts name, class, date, time',
+                      'Booking created automatically in your system',
+                      'Confirmation sent back: "✅ Booked! See you there 🧘"'
+                    ].map((step, i) => (
+                      <div key={i} className="flex items-start gap-2.5">
+                        <span className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0 mt-0.5" style={{ background: C.g[700] }}>{i + 1}</span>
+                        <p className="text-[13px]" style={{ color: C.t[700], fontFamily: font.body }}>{step}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl p-4" style={{ backgroundColor: '#FFF8F0', border: '1px solid #F5D6B8' }}>
+                  <p className="text-[13px] font-medium mb-1" style={{ fontFamily: font.body }}>⚡ Zero API costs</p>
+                  <p className="text-[12px]" style={{ color: C.t[500], fontFamily: font.body }}>
+                    Uses OpenClaw to connect your WhatsApp — no Meta Business account, no 360dialog fees. Just scan a QR code.
+                  </p>
+                </div>
+
+                <p className="text-[13px]" style={{ color: C.t[500], fontFamily: font.body }}>
+                  Click "Connect" below and we'll generate a QR code for you to scan with your WhatsApp.
+                </p>
+              </div>
+            )}
+
+            {selected?.api && selectedIntegration !== 'google_sheets' && selectedIntegration !== 'excel' && selectedIntegration !== 'whatsapp_intake' && (
               <div className="space-y-5">
                 <div>
                   <label className="block text-[13px] font-medium mb-1.5" style={{ color: C.t[700], fontFamily: font.body }}>

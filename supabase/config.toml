@@ -27,3 +27,9 @@ verify_jwt = false
 
 [functions.settings-api]
 verify_jwt = false
+
+[functions.provision-whatsapp]
+verify_jwt = false
+
+[functions.parse-booking]
+verify_jwt = false
