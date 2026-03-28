@@ -56,7 +56,7 @@ export default function ClassBrief() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl sm:text-3xl" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>Class Briefs</h1>
+            <h1 className="text-2xl sm:text-3xl" style={{ fontFamily: "'Francy Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>Class Briefs</h1>
             <p className="mt-1 text-sm" style={{ color: '#6B6B6B' }}>Pre-class insights for today</p>
           </div>
           <div className="flex items-center gap-2 text-sm" style={{ color: '#6B6B6B' }}>
@@ -84,7 +84,7 @@ export default function ClassBrief() {
         {!loading && classes.length === 0 && (
           <div className="text-center py-16 rounded-xl" style={{ background: '#fff', border: '1px solid #E5E5E5' }}>
             <Calendar className="w-12 h-12 mx-auto mb-3" style={{ color: '#8A8A8A' }} />
-            <h3 className="text-lg mb-1" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>No classes today</h3>
+            <h3 className="text-lg mb-1" style={{ fontFamily: "'Francy Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>No classes today</h3>
             <p className="text-sm" style={{ color: '#6B6B6B' }}>No classes are scheduled for today.</p>
           </div>
         )}
@@ -105,7 +105,7 @@ function Stat({ label, val, icon, bg, fg }: { label: string; val: number; icon: 
     <div className="rounded-xl p-4 flex items-center gap-3" style={{ background: '#fff', border: '1px solid #E5E5E5' }}>
       <div className="p-2 rounded-lg" style={{ background: bg, color: fg }}>{icon}</div>
       <div>
-        <p className="text-xl sm:text-2xl font-bold" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>{val}</p>
+        <p className="text-xl sm:text-2xl font-bold" style={{ fontFamily: "'Francy Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>{val}</p>
         <p className="text-xs sm:text-sm" style={{ color: '#6B6B6B' }}>{label}</p>
       </div>
     </div>
@@ -123,7 +123,7 @@ function ClassCard({ cls }: { cls: ClassBrief }) {
       <div className="flex items-start justify-between mb-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h3 className="text-base sm:text-lg truncate" style={{ fontFamily: "'After Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>{cls.name}</h3>
+            <h3 className="text-base sm:text-lg truncate" style={{ fontFamily: "'Francy Regular', 'General Sans', sans-serif", color: '#0F0F0F' }}>{cls.name}</h3>
             {isSoon && <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#E8F0DE', color: '#2D5016' }}>Soon</span>}
             <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: riskBg, color: riskCol }}>Risk {cls.risk_score}</span>
           </div>

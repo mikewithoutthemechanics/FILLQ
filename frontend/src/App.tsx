@@ -27,7 +27,7 @@ const C = {
   b: '#E5E5E5',
   w: '#FAFAF8',
 }
-const font = { display: "'After Regular', 'General Sans', sans-serif", body: "'General Sans', 'Satoshi', sans-serif" }
+const font = { display: "'Francy Regular', 'General Sans', sans-serif", body: "'General Sans', 'Satoshi', sans-serif" }
 
 function isOnboarded() {
   return localStorage.getItem('filliq_onboarded') === 'true'
