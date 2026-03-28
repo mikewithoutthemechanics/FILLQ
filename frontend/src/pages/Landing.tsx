@@ -16,6 +16,7 @@ import {
   BarChart3,
   Heart
 } from 'lucide-react'
+import CylindricalCarousel from '../components/CylindricalCarousel'
 
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
@@ -269,6 +270,11 @@ export default function Landing() {
             </motion.div>
           </motion.div>
         </div>
+      </section>
+
+      {/* ── 3D CAROUSEL ──────────────────────────────── */}
+      <section className="relative z-10 py-12 overflow-hidden">
+        <CylindricalCarousel />
       </section>
 
       {/* ── MARQUEE — trust logos ──────────────────────── */}
