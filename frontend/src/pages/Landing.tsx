@@ -23,7 +23,7 @@ import HolographicCard from '../components/HolographicCard'
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
   g: { 900: '#1B3A0A', 800: '#2D5016', 700: '#3D6B22', 600: '#4A7C28', 500: '#5E9A34', 400: '#8BAA6B', 300: '#B5CDA3', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  a: { 700: '#8B2500', 600: '#FF6B6B', 500: '#FF8C7A', 400: '#FFE4DC', 100: '#FFF5F3' },
+  a: { 700: '#7A2000', 600: '#D4451A', 500: '#E86840', 400: '#F5D8CC', 100: '#FFF0EA' },
   t: { 900: '#0F0F0F', 800: '#1A1A1A', 700: '#2D2D2D', 600: '#4A4A4A', 500: '#6B6B6B', 400: '#8A8A8A', 300: '#ABABAB' },
   b: '#E5E5E5',
   w: '#FAFAF8',
@@ -164,7 +164,7 @@ export default function Landing() {
             >
               {/* Chrome bar */}
               <div className="flex items-center gap-2 px-4 h-10" style={{ backgroundColor: '#F7F7F5', borderBottom: `1px solid ${C.b}` }}>
-                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#FF6B6B' }} />
+                <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#D4451A' }} />
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#F2CC8F' }} />
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.g[400] }} />
                 <div className="ml-3 flex-1 rounded-md h-5 flex items-center px-2.5" style={{ background: '#EEEEEC' }}>

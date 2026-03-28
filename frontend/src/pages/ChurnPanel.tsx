@@ -22,8 +22,8 @@ function getRiskLevel(score: number): RiskLevel {
 }
 
 const riskStyles: Record<RiskLevel, { bg: string; text: string; label: string }> = {
-  critical: { bg: 'bg-[#8B2500]/10', text: 'text-[#8B2500]', label: 'Critical' },
-  high: { bg: 'bg-[#FF6B6B]/10', text: 'text-[#FF6B6B]', label: 'High' },
+  critical: { bg: 'bg-[#7A2000]/10', text: 'text-[#7A2000]', label: 'Critical' },
+  high: { bg: 'bg-[#D4451A]/10', text: 'text-[#D4451A]', label: 'High' },
   medium: { bg: 'bg-[#E8F0DE]', text: 'text-[#2D5016]', label: 'Medium' },
 }
 
@@ -72,7 +72,7 @@ function MemberRow({ member }: { member: ChurnMember }) {
               <ul className="space-y-1">
                 {member.signals.map((s, i) => (
                   <li key={i} className="text-sm text-[#0F0F0F] flex items-start gap-2">
-                    <AlertTriangle className="w-3.5 h-3.5 text-[#FF6B6B] mt-0.5 shrink-0" />
+                    <AlertTriangle className="w-3.5 h-3.5 text-[#D4451A] mt-0.5 shrink-0" />
                     {s}
                   </li>
                 ))}
@@ -151,8 +151,8 @@ export default function ChurnPanel() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         {[
           { icon: <Users className="w-5 h-5 text-[#4A7C28]" />, bg: 'bg-[#E8F0DE]', value: members.length, label: 'At Risk' },
-          { icon: <AlertTriangle className="w-5 h-5 text-[#8B2500]" />, bg: 'bg-[#8B2500]/10', value: criticalCount, label: 'Critical' },
-          { icon: <AlertTriangle className="w-5 h-5 text-[#FF6B6B]" />, bg: 'bg-[#FF6B6B]/10', value: highCount, label: 'High Risk' },
+          { icon: <AlertTriangle className="w-5 h-5 text-[#7A2000]" />, bg: 'bg-[#7A2000]/10', value: criticalCount, label: 'Critical' },
+          { icon: <AlertTriangle className="w-5 h-5 text-[#D4451A]" />, bg: 'bg-[#D4451A]/10', value: highCount, label: 'High Risk' },
           { icon: <CheckCircle className="w-5 h-5 text-[#4A7C28]" />, bg: 'bg-[#E8F0DE]', value: members.filter(m => m.risk_level === 'medium').length, label: 'Medium' },
         ].map((s, i) => (
           <div key={i} className="bg-white border border-[#E5E5E5] rounded-xl p-4">

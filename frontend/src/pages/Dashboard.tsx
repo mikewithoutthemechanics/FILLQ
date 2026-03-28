@@ -6,7 +6,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recha
 // ── Colors ──────────────────────────────────────────────
 const C = {
   gD: '#2D5016', gM: '#4A7C28', gL: '#8BAA6B', gP: '#E8F0DE', gW: '#F4F8EF',
-  rD: '#8B2500', rM: '#FF6B6B',
+  rD: '#7A2000', rM: '#D4451A',
   t9: '#0F0F0F', t5: '#6B6B6B', t4: '#8A8A8A',
   bg: '#FAFAF8', bd: '#E5E5E5',
 }

@@ -18,7 +18,13 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
   }, [texts.length, interval])
 
   return (
-    <span className={`relative inline-block ${className}`} style={{ verticalAlign: 'baseline' }}>
+    <span
+      className={className}
+      style={{
+        display: 'inline',
+        position: 'relative',
+      }}
+    >
       <AnimatePresence mode="popLayout">
         <motion.span
           key={texts[index]}
@@ -26,12 +32,15 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '-120%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="inline-block px-3.5 py-1.5 rounded-lg relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 40%, #FF6B6B 100%)',
+            display: 'inline-block',
+            padding: '0.15em 0.35em',
+            borderRadius: '0.25em',
+            background: 'linear-gradient(135deg, #D4451A 0%, #B83A18 50%, #D4451A 100%)',
             color: '#fff',
-            boxShadow: '0 4px 20px rgba(255,107,107,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
-            verticalAlign: 'baseline',
+            boxShadow: '0 4px 20px rgba(212,69,26,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
           {texts[index]}
