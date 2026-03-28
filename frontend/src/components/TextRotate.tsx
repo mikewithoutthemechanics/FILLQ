@@ -1,11 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 
-const C = {
-  g: { 800: '#2D5016', 700: '#3D6B22', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  a: { 700: '#6B3A28', 600: '#E07A5F' },
-}
-
 interface TextRotateProps {
   texts: string[]
   interval?: number
@@ -23,7 +18,7 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
   }, [texts.length, interval])
 
   return (
-    <span className={`relative inline-block ${className}`}>
+    <span className={`relative inline-block ${className}`} style={{ verticalAlign: 'baseline' }}>
       <AnimatePresence mode="popLayout">
         <motion.span
           key={texts[index]}
@@ -31,11 +26,12 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: '-120%', opacity: 0 }}
           transition={{ type: 'spring', damping: 28, stiffness: 350 }}
-          className="inline-block px-3 py-1 rounded-lg relative overflow-hidden"
+          className="inline-block px-3.5 py-1.5 rounded-lg relative overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #E07A5F 0%, #D4654A 50%, #E07A5F 100%)',
+            background: 'linear-gradient(135deg, #FF6B6B 0%, #FF5252 40%, #FF6B6B 100%)',
             color: '#fff',
-            boxShadow: '0 2px 12px rgba(224,122,95,0.4), inset 0 1px 0 rgba(255,255,255,0.25)',
+            boxShadow: '0 4px 20px rgba(255,107,107,0.4), inset 0 1px 0 rgba(255,255,255,0.3)',
+            verticalAlign: 'baseline',
           }}
         >
           {texts[index]}
