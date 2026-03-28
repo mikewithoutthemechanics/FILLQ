@@ -34,7 +34,7 @@ export interface TeacherClassBrief {
   note: string
 }
 
-export interface FillIQSettings {
+export interface WaitUpSettings {
   id: string
   studioId: string
   maxSimultaneousInvites: number

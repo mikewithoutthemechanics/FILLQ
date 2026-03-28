@@ -46,7 +46,7 @@ const INTEGRATIONS = [
 const TOUR_STEPS = [
   {
     title: 'Connect your booking system',
-    desc: 'FillIQ reads from your existing system — it doesn\'t replace it. Pick yours below and we\'ll handle the sync.',
+    desc: 'WaitUp reads from your existing system — it doesn\'t replace it. Pick yours below and we\'ll handle the sync.',
     icon: <Link2 className="w-6 h-6" />,
     tip: 'No booking system? Start with Google Sheets or Excel upload.'
   },
@@ -54,17 +54,17 @@ const TOUR_STEPS = [
     title: 'We import your data',
     desc: 'Members, classes, and bookings flow in automatically. You\'ll see them populate on the dashboard within minutes.',
     icon: <Upload className="w-6 h-6" />,
-    tip: 'Your data stays yours. FillIQ only reads — it never modifies your booking system.'
+    tip: 'Your data stays yours. WaitUp only reads — it never modifies your booking system.'
   },
   {
     title: 'AI starts scoring',
     desc: 'Every booking gets a 0-100 no-show risk score. Classes within 3 hours get priority scoring.',
     icon: <BarChart3 className="w-6 h-6" />,
-    tip: 'Scores improve over time as FillIQ learns your studio\'s patterns.'
+    tip: 'Scores improve over time as WaitUp learns your studio\'s patterns.'
   },
   {
     title: 'WhatsApp auto-fill kicks in',
-    desc: 'When someone cancels, FillIQ instantly contacts your top waitlist candidates. First reply wins the spot.',
+    desc: 'When someone cancels, WaitUp instantly contacts your top waitlist candidates. First reply wins the spot.',
     icon: <MessageCircle className="w-6 h-6" />,
     tip: 'You can set how many people to invite at once (default: 3).'
   },
@@ -72,7 +72,7 @@ const TOUR_STEPS = [
     title: 'Watch the dashboard',
     desc: 'Revenue recovered, spots filled, fill rates, at-risk members — all in real-time.',
     icon: <Sparkles className="w-6 h-6" />,
-    tip: 'Check back daily or let FillIQ work in the background.'
+    tip: 'Check back daily or let WaitUp work in the background.'
   },
 ]
 
@@ -91,11 +91,11 @@ export default function Tour() {
 
   const handleConnect = async () => {
     setConnecting(true)
-    const studioId = localStorage.getItem('filliq_studio_id')
+    const studioId = localStorage.getItem('waitup_studio_id')
 
     if (selectedIntegration === 'google_sheets') {
       // Store Google Sheets config
-      await supabase.from('filliq_settings').update({
+      await supabase.from('waitup_settings').update({
         waba_provider: 'google_sheets',
         waba_phone_number_id: apiUrl, // Reuse field for sheet URL
       }).eq('studio_id', studioId || 'default-studio')
@@ -118,13 +118,13 @@ export default function Tour() {
       return // Don't set connected yet — user needs to scan QR
     } else {
       // API-based integration
-      await supabase.from('filliq_settings').update({
+      await supabase.from('waitup_settings').update({
         waba_provider: selectedIntegration,
         waba_access_token_encrypted: apiKey || null,
       }).eq('studio_id', studioId || 'default-studio')
     }
 
-    localStorage.setItem('filliq_integration', selectedIntegration || '')
+    localStorage.setItem('waitup_integration', selectedIntegration || '')
     setConnecting(false)
     setConnected(true)
   }
@@ -146,7 +146,7 @@ export default function Tour() {
             You're <span style={{ color: C.g[700] }}>connected!</span>
           </h1>
           <p className="mt-3 text-[15px]" style={{ color: C.t[500], fontFamily: font.body }}>
-            FillIQ is now syncing with your {INTEGRATIONS.find(i => i.id === selectedIntegration)?.name} data.
+            WaitUp is now syncing with your {INTEGRATIONS.find(i => i.id === selectedIntegration)?.name} data.
             Risk scores will appear within 15 minutes.
           </p>
 
@@ -209,7 +209,7 @@ export default function Tour() {
                     onBlur={e => e.target.style.borderColor = C.b}
                   />
                   <p className="mt-2 text-[12px]" style={{ color: C.t[400], fontFamily: font.body }}>
-                    Share your sheet with: <span className="font-mono px-1.5 py-0.5 rounded" style={{ backgroundColor: C.g[50] }}>filliq-sync@filliq.iam.gserviceaccount.com</span>
+                    Share your sheet with: <span className="font-mono px-1.5 py-0.5 rounded" style={{ backgroundColor: C.g[50] }}>waitup-sync@waitup.iam.gserviceaccount.com</span>
                   </p>
                 </div>
                 <div className="rounded-xl p-4" style={{ backgroundColor: C.g[50], border: `1px solid ${C.g[200]}` }}>
@@ -253,7 +253,7 @@ export default function Tour() {
                       <div className="space-y-3">
                         {[
                           'Client texts your WhatsApp: "Can I book yoga tomorrow at 9am?"',
-                          'FillIQ parses the message — extracts name, class, date, time',
+                          'WaitUp parses the message — extracts name, class, date, time',
                           'Booking created automatically in your system',
                           'Confirmation sent back: "✅ Booked! See you there 🧘"'
                         ].map((step, i) => (
@@ -410,7 +410,7 @@ export default function Tour() {
           <p className="text-[12px] font-medium tracking-[0.1em] uppercase mb-2" style={{ color: C.g[700], fontFamily: font.body }}>Integrations</p>
           <h2 className="text-[24px] font-bold" style={{ fontFamily: font.display }}>Connect your booking system</h2>
           <p className="mt-2 text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
-            Pick yours — FillIQ reads your data, it never modifies it.
+            Pick yours — WaitUp reads your data, it never modifies it.
           </p>
 
           <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">

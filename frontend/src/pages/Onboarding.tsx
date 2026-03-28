@@ -52,7 +52,7 @@ export default function Onboarding() {
       const { data: { user } } = await supabase.auth.getUser()
 
       // Create studio settings
-      await supabase.from('filliq_settings').upsert({
+      await supabase.from('waitup_settings').upsert({
         studio_id: studioId,
         default_class_price: parseFloat(defaultPrice) || 150,
         auto_fill_enabled: true,
@@ -71,9 +71,9 @@ export default function Onboarding() {
       }
 
       // Store studio ID in localStorage for the session
-      localStorage.setItem('filliq_studio_id', studioId)
-      localStorage.setItem('filliq_studio_name', studioName)
-      localStorage.setItem('filliq_onboarded', 'true')
+      localStorage.setItem('waitup_studio_id', studioId)
+      localStorage.setItem('waitup_studio_name', studioName)
+      localStorage.setItem('waitup_onboarded', 'true')
 
       setStep(3)
     } catch (err) {
@@ -113,7 +113,7 @@ export default function Onboarding() {
               <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: C.g[100] }}>
                 <Building2 className="w-6 h-6" style={{ color: C.g[800] }} />
               </div>
-              <h1 className="text-[28px] font-bold" style={{ fontFamily: font.display }}>Welcome to FillIQ</h1>
+              <h1 className="text-[28px] font-bold" style={{ fontFamily: font.display }}>Welcome to WaitUp</h1>
               <p className="mt-2 text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
                 Let's set up your studio. Takes 2 minutes.
               </p>
@@ -209,7 +209,7 @@ export default function Onboarding() {
               </div>
               <h1 className="text-[28px] font-bold" style={{ fontFamily: font.display }}>WhatsApp setup</h1>
               <p className="mt-2 text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
-                FillIQ sends waitlist notifications and rebook nudges via WhatsApp. Add your business number to get started.
+                WaitUp sends waitlist notifications and rebook nudges via WhatsApp. Add your business number to get started.
               </p>
 
               <div className="mt-8">
@@ -252,7 +252,7 @@ export default function Onboarding() {
                 You're all set, <span style={{ color: C.g[700] }}>{studioName.split(' ')[0]}</span>!
               </h1>
               <p className="mt-3 text-[15px] max-w-sm mx-auto" style={{ color: C.t[500], fontFamily: font.body }}>
-                FillIQ is now watching over your classes. Head to the dashboard to see it in action.
+                WaitUp is now watching over your classes. Head to the dashboard to see it in action.
               </p>
 
               <button onClick={() => navigate('/tour')}

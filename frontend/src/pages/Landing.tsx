@@ -55,7 +55,7 @@ export default function Landing() {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: C.g[800] }}>
               <TrendingUp className="w-4 h-4 text-white" />
             </div>
-            <span className="text-[17px] font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
+            <span className="text-[17px] font-semibold" style={{ fontFamily: font.display }}>WaitUp</span>
           </Link>
 
           <div className="hidden md:flex items-center gap-7 text-[14px]" style={{ color: C.t[600], fontFamily: font.body }}>
@@ -109,7 +109,7 @@ export default function Landing() {
               className="mt-7 text-[18px] leading-[1.6] max-w-[500px]"
               style={{ color: C.t[500], fontFamily: font.body }}
             >
-              FillIQ predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
+              WaitUp predicts cancellations, fills empty spots via WhatsApp in under a minute, and catches members before they churn.
             </motion.p>
 
             {/* CTAs */}
@@ -170,7 +170,7 @@ export default function Landing() {
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: '#F2CC8F' }} />
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: C.g[400] }} />
                 <div className="ml-3 flex-1 rounded-md h-5 flex items-center px-2.5" style={{ background: '#EEEEEC' }}>
-                  <span className="text-[10px]" style={{ color: C.t[400] }}>filliq.vercel.app</span>
+                  <span className="text-[10px]" style={{ color: C.t[400] }}>waitup.vercel.app</span>
                 </div>
               </div>
 
@@ -328,7 +328,7 @@ export default function Landing() {
                 <span style={{ color: C.r[700] }}>A recovery engine.</span>
               </h2>
               <p className="mt-5 text-[15px] leading-[1.7] max-w-md" style={{ color: C.t[500], fontFamily: font.body }}>
-                FillIQ runs silently in the background. It scores, it fills, it nudges. You just see the revenue coming back.
+                WaitUp runs silently in the background. It scores, it fills, it nudges. You just see the revenue coming back.
               </p>
 
               <div className="mt-10 space-y-5">
@@ -480,7 +480,7 @@ export default function Landing() {
         <div className="max-w-[1200px] mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <TrendingUp className="w-4 h-4" style={{ color: C.g[800] }} />
-            <span className="text-[14px] font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
+            <span className="text-[14px] font-semibold" style={{ fontFamily: font.display }}>WaitUp</span>
           </div>
           <p className="text-[12px]" style={{ color: C.t[400], fontFamily: font.body }}>Built for South African studios 🇿🇦 · © 2026</p>
         </div>

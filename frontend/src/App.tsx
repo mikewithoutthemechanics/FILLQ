@@ -29,7 +29,7 @@ const C = {
 const font = { display: "'DM Serif Display', serif", body: "'DM Sans', sans-serif" }
 
 function isOnboarded() {
-  return localStorage.getItem('filliq_onboarded') === 'true'
+  return localStorage.getItem('waitup_onboarded') === 'true'
 }
 
 function ProtectedRoute({ children, requireOnboarding = true }: { children: React.ReactNode; requireOnboarding?: boolean }) {
@@ -61,7 +61,7 @@ function ProtectedRoute({ children, requireOnboarding = true }: { children: Reac
 
 function AppLayout({ children }: { children: React.ReactNode }) {
   const { signOut } = useAuth()
-  const studioName = localStorage.getItem('filliq_studio_name') || 'Studio'
+  const studioName = localStorage.getItem('waitup_studio_name') || 'Studio'
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: C.w }}>
@@ -76,7 +76,7 @@ function AppLayout({ children }: { children: React.ReactNode }) {
                 <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: C.g[800] }}>
                   <TrendingUp className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-lg font-semibold" style={{ fontFamily: font.display, color: C.t[900] }}>FillIQ</span>
+                <span className="text-lg font-semibold" style={{ fontFamily: font.display, color: C.t[900] }}>WaitUp</span>
               </div>
 
               <div className="hidden md:ml-8 md:flex md:space-x-1">

@@ -62,7 +62,7 @@ export default function Login() {
             <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center backdrop-blur">
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-semibold text-white" style={{ fontFamily: font.display }}>FillIQ</span>
+            <span className="text-lg font-semibold text-white" style={{ fontFamily: font.display }}>WaitUp</span>
           </Link>
 
           {/* Hero text */}
@@ -92,7 +92,7 @@ export default function Login() {
           </motion.div>
 
           {/* Footer */}
-          <p className="text-[12px] text-white/30" style={{ fontFamily: font.body }}>© 2026 FillIQ · Built in South Africa 🇿🇦</p>
+          <p className="text-[12px] text-white/30" style={{ fontFamily: font.body }}>© 2026 WaitUp · Built in South Africa 🇿🇦</p>
         </div>
       </div>
 
@@ -109,14 +109,14 @@ export default function Login() {
             <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: C.g[800] }}>
               <TrendingUp className="w-5 h-5 text-white" />
             </div>
-            <span className="text-lg font-semibold" style={{ fontFamily: font.display }}>FillIQ</span>
+            <span className="text-lg font-semibold" style={{ fontFamily: font.display }}>WaitUp</span>
           </Link>
 
           <p className="text-[12px] font-medium tracking-[0.08em] uppercase mb-2" style={{ color: C.g[700], fontFamily: font.body }}>
             {isSignUp ? 'Create account' : 'Welcome back'}
           </p>
           <h2 className="text-[28px] font-bold leading-tight" style={{ fontFamily: font.display }}>
-            {isSignUp ? 'Start recovering revenue' : 'Sign in to FillIQ'}
+            {isSignUp ? 'Start recovering revenue' : 'Sign in to WaitUp'}
           </h2>
           <p className="mt-2 text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
             {isSignUp ? 'Free to start. No card needed.' : 'Let\'s fill some classes.'}
