@@ -444,7 +444,7 @@ export default function Landing() {
       {/* ── CTA ─────────────────────────────────────────── */}
       <SectionBg>
         <div className="max-w-[800px] mx-auto px-6 lg:px-10 py-24 lg:py-32 text-center">
-          <h2 className="text-[clamp(2rem,5vw,3.5rem)] leading-[1.08] tracking-[-0.02em]" style={{ fontFamily: font.display }}>
+          <h2 className="text-[clamp(2rem,5vw,3.5rem)] leading-[1.1] tracking-[0em]" style={{ fontFamily: font.display }}>
             Ready to stop<br />losing revenue?
           </h2>
           <p className="mt-5 text-[16px]" style={{ color: C.t[500], fontFamily: font.body }}>
