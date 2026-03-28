@@ -41,6 +41,8 @@ export default function TextRotate({ texts, interval = 2200, className = '' }: T
             boxShadow: '0 4px 20px rgba(212,69,26,0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
             position: 'relative',
             overflow: 'hidden',
+            verticalAlign: 'text-bottom',
+            marginTop: '0.1em',
           }}
         >
           {texts[index]}
