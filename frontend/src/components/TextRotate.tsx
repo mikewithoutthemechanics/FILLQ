@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 
 const C = {
   g: { 800: '#2D5016', 700: '#3D6B22', 400: '#8BAA6B', 200: '#D4E4C8', 100: '#E8F0DE', 50: '#F4F8EF' },
-  a: { 700: '#8B6914', 600: '#B8860B' },
+  a: { 700: '#7D4E37', 600: '#C67B5C' },
 }
 
 interface TextRotateProps {
