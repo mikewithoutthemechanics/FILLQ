@@ -217,6 +217,22 @@ export default function Login() {
             </p>
           </div>
 
+          {/* Demo login */}
+          <div className="mt-6 text-center">
+            <button
+              onClick={() => {
+                localStorage.setItem('filliq_onboarded', 'false')
+                localStorage.setItem('filliq_studio_id', 'demo-studio')
+                localStorage.setItem('filliq_studio_name', 'Demo Studio')
+                navigate('/onboarding')
+              }}
+              className="text-[12px] underline transition-colors"
+              style={{ color: C.t[400], fontFamily: font.body }}
+            >
+              Skip login — demo mode
+            </button>
+          </div>
+
           {/* Back to landing */}
           <div className="mt-8 text-center">
             <Link to="/landing" className="text-[12px] transition-colors" style={{ color: C.t[400], fontFamily: font.body }}>

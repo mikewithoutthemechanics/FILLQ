@@ -35,8 +35,9 @@ function isOnboarded() {
 
 function ProtectedRoute({ children, requireOnboarding = true }: { children: React.ReactNode; requireOnboarding?: boolean }) {
   const { user, loading } = useAuth()
+  const isDemo = localStorage.getItem('filliq_studio_id') === 'demo-studio'
 
-  if (loading) {
+  if (loading && !isDemo) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: C.w }}>
         <div className="flex flex-col items-center gap-4">
@@ -47,6 +48,14 @@ function ProtectedRoute({ children, requireOnboarding = true }: { children: Reac
         </div>
       </div>
     )
+  }
+
+  // Demo mode bypasses auth
+  if (isDemo) {
+    if (requireOnboarding && !isOnboarded()) {
+      return <Navigate to="/onboarding" replace />
+    }
+    return <>{children}</>
   }
 
   if (!user) {
