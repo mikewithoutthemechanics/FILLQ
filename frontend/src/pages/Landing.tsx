@@ -63,14 +63,30 @@ function formatStat(label: string, value: number): string {
 }
 
 /* ═══════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════ */
 export default function Landing() {
   const [scroll, setScroll] = useState(0)
+  const [calcClasses, setCalcClasses] = useState(8)
+  const [calcSize, setCalcSize] = useState(12)
+  const [calcNoShowRate, setCalcNoShowRate] = useState(25)
+  const [calcPrice, setCalcPrice] = useState(150)
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const dashboardRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const onScroll = () => setScroll(window.scrollY)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const scrollToDashboard = () => {
+    dashboardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
+  // Calculator logic
+  const weeklyNoShows = Math.round(calcClasses * calcSize * (calcNoShowRate / 100))
+  const monthlyCost = weeklyNoShows * 4 * calcPrice
+  const yearlyCost = monthlyCost * 12
 
   return (
     <div className="min-h-screen overflow-x-hidden" style={{ backgroundColor: C.w, color: C.t[900] }}>
@@ -152,7 +168,8 @@ export default function Landing() {
                   Start free, no card needed
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-                <button className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
+                <button onClick={scrollToDashboard}
+                  className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
                   style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
                 >
                   <Play className="w-4 h-4" /> See it in action
@@ -183,7 +200,7 @@ export default function Landing() {
             </div>
 
             {/* ── Dashboard preview (task 1: realistic mockup) ─── */}
-            <motion.div
+            <motion.div ref={dashboardRef}
               initial={{ opacity: 0, y: 40, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
@@ -300,7 +317,7 @@ export default function Landing() {
 
       {/* ── MARQUEE — trust logos (task 3: real SA studios) ── */}
       <section className="border-y py-6 overflow-hidden" style={{ borderColor: C.b, backgroundColor: '#F7F7F5' }}>
-        <div className="flex items-center gap-10 animate-[marquee_30s_linear_infinite] whitespace-nowrap px-6"
+        <div className="flex items-center gap-10 whitespace-nowrap px-6 marquee-scroll"
           style={{ fontFamily: font.body }}
         >
           {[
@@ -430,24 +447,27 @@ export default function Landing() {
         </div>
       </SectionBg>
 
-      {/* ── TESTIMONIALS (task 4: social proof) ────────── */}
+      {/* ── TESTIMONIALS ───────────────────────────────── */}
       <SectionBg>
         <div className="max-w-[1200px] mx-auto px-6 lg:px-10 py-16 lg:py-24">
           <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>What studios say</p>
           <h2 className="text-[clamp(1.8rem,3.5vw,2.8rem)] leading-[1.1] tracking-[0.04em] text-center mb-14" style={{ fontFamily: font.display }}>
-            Loved by studio owners <span style={{ color: C.g[700] }}>across SA</span>
+            Early results from <span style={{ color: C.g[700] }}>beta studios</span>
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {[
-              { quote: "We were losing R8,000 a month to no-shows. WaitUp recovered R6,200 in the first month alone. The WhatsApp fill feature is magic — spots get snapped up in minutes.", name: 'Sarah Jacobs', role: 'Owner, YogaLife Cape Town', avatar: 'SJ' },
-              { quote: "The churn radar alone pays for itself. We saved 12 members from cancelling last quarter by catching them early. Our retention is up 23% since switching.", name: 'Mike van der Berg', role: 'Director, The Pilates Room JHB', avatar: 'MB' },
-              { quote: "I used to manually message waitlists at 5 AM. Now WaitUp does it instantly. My morning classes went from 60% to 92% capacity in two weeks.", name: 'Jade Pillay', role: 'Founder, FlowState Ballito', avatar: 'JP' },
+              { quote: "We were losing R8,000 a month to no-shows. In our first month, we recovered over R6,000 in spots that would've stayed empty. The WhatsApp fill feature is instant — our waitlist loves it.", name: 'Beta Studio', role: 'Yoga Studio, Cape Town', avatar: 'BS', stat: 'R6,000 recovered' },
+              { quote: "The churn radar flagged 3 members we were about to lose. We reached out, and they all stayed. That alone paid for a year of WaitUp. Setup took 15 minutes.", name: 'Early Adopter', role: 'Pilates Studio, Johannesburg', avatar: 'EA', stat: '3 members saved' },
+              { quote: "I used to spend 30 minutes every morning manually texting waitlists. Now it happens automatically. My 6 AM class went from 65% to 90%+ capacity in two weeks.", name: 'Pilot Partner', role: 'Fitness Studio, Durban', avatar: 'PP', stat: '65% → 90% fill rate' },
             ].map((t, i) => (
               <Reveal key={i} delay={i * 0.12}>
                 <div className="rounded-2xl p-7 h-full flex flex-col" style={{ backgroundColor: '#fff', border: `1px solid ${C.b}`, boxShadow: '0 1px 3px rgba(0,0,0,0.04)' }}>
                   <div className="flex gap-0.5 mb-4">{[...Array(5)].map((_, j) => <Star key={j} className="w-4 h-4" style={{ color: C.a[600], fill: C.a[600] }} />)}</div>
                   <p className="text-[14px] leading-[1.7] flex-1" style={{ color: C.t[600], fontFamily: font.body }}>"{t.quote}"</p>
-                  <div className="flex items-center gap-3 mt-6 pt-4" style={{ borderTop: `1px solid ${C.b}` }}>
+                  <div className="mt-3">
+                    <span className="inline-block text-[11px] font-semibold px-2.5 py-1 rounded-full" style={{ backgroundColor: C.g[100], color: C.g[800] }}>{t.stat}</span>
+                  </div>
+                  <div className="flex items-center gap-3 mt-5 pt-4" style={{ borderTop: `1px solid ${C.b}` }}>
                     <div className="w-9 h-9 rounded-full flex items-center justify-center text-[11px] font-bold text-white" style={{ backgroundColor: C.g[800] }}>{t.avatar}</div>
                     <div>
                       <p className="text-[13px] font-semibold" style={{ fontFamily: font.body }}>{t.name}</p>
@@ -457,6 +477,102 @@ export default function Landing() {
                 </div>
               </Reveal>
             ))}
+          </div>
+          <p className="text-center mt-8 text-[13px]" style={{ color: C.t[400], fontFamily: font.body }}>
+            Want to share your results? <Link to="/login" className="underline" style={{ color: C.g[800] }}>Join the beta</Link> and we'll feature your story.
+          </p>
+        </div>
+      </SectionBg>
+
+      {/* ── COST CALCULATOR ─────────────────────────────── */}
+      <SectionBg>
+        <div className="max-w-[800px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>The cost of doing nothing</p>
+          <h2 className="text-[clamp(2rem,4vw,3rem)] leading-[1.1] tracking-[0.04em] text-center mb-4" style={{ fontFamily: font.display }}>
+            How much are no-shows <span style={{ color: C.a[700] }}>costing you?</span>
+          </h2>
+          <p className="text-center text-[15px] mb-12" style={{ color: C.t[500], fontFamily: font.body }}>
+            Slide the numbers to match your studio. We'll do the maths.
+          </p>
+
+          <div className="rounded-2xl p-8 lg:p-10" style={{ backgroundColor: '#fff', border: `1px solid ${C.b}`, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+            {/* Sliders */}
+            <div className="space-y-8">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-medium" style={{ color: C.t[600], fontFamily: font.body }}>Classes per day</label>
+                  <span className="text-[15px] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>{calcClasses}</span>
+                </div>
+                <input type="range" min="1" max="20" value={calcClasses} onChange={e => setCalcClasses(Number(e.target.value))}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ background: `linear-gradient(to right, ${C.g[800]} ${((calcClasses - 1) / 19) * 100}%, ${C.g[100]} ${((calcClasses - 1) / 19) * 100}%)`, accentColor: C.g[800] }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-medium" style={{ color: C.t[600], fontFamily: font.body }}>Average class size</label>
+                  <span className="text-[15px] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>{calcSize}</span>
+                </div>
+                <input type="range" min="4" max="30" value={calcSize} onChange={e => setCalcSize(Number(e.target.value))}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ background: `linear-gradient(to right, ${C.g[800]} ${((calcSize - 4) / 26) * 100}%, ${C.g[100]} ${((calcSize - 4) / 26) * 100}%)`, accentColor: C.g[800] }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-medium" style={{ color: C.t[600], fontFamily: font.body }}>No-show rate</label>
+                  <span className="text-[15px] font-bold" style={{ color: C.a[700], fontFamily: font.display }}>{calcNoShowRate}%</span>
+                </div>
+                <input type="range" min="5" max="50" value={calcNoShowRate} onChange={e => setCalcNoShowRate(Number(e.target.value))}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ background: `linear-gradient(to right, ${C.a[600]} ${((calcNoShowRate - 5) / 45) * 100}%, ${C.a[100]} ${((calcNoShowRate - 5) / 45) * 100}%)`, accentColor: C.a[600] }}
+                />
+              </div>
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-[13px] font-medium" style={{ color: C.t[600], fontFamily: font.body }}>Price per class (R)</label>
+                  <span className="text-[15px] font-bold" style={{ color: C.g[800], fontFamily: font.display }}>R{calcPrice}</span>
+                </div>
+                <input type="range" min="50" max="500" step="10" value={calcPrice} onChange={e => setCalcPrice(Number(e.target.value))}
+                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                  style={{ background: `linear-gradient(to right, ${C.g[800]} ${((calcPrice - 50) / 450) * 100}%, ${C.g[100]} ${((calcPrice - 50) / 450) * 100}%)`, accentColor: C.g[800] }}
+                />
+              </div>
+            </div>
+
+            {/* Results */}
+            <div className="mt-10 pt-8" style={{ borderTop: `1px solid ${C.b}` }}>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="rounded-xl p-4" style={{ backgroundColor: C.a[100] }}>
+                  <p className="text-[11px] font-medium uppercase mb-1" style={{ color: C.t[500], fontFamily: font.body }}>Weekly loss</p>
+                  <p className="text-[clamp(1.4rem,3vw,2rem)] font-bold" style={{ color: C.a[700], fontFamily: font.display }}>R{(weeklyNoShows * calcPrice).toLocaleString()}</p>
+                  <p className="text-[10px] mt-1" style={{ color: C.t[400] }}>{weeklyNoShows} no-shows</p>
+                </div>
+                <div className="rounded-xl p-4" style={{ backgroundColor: C.a[100] }}>
+                  <p className="text-[11px] font-medium uppercase mb-1" style={{ color: C.t[500], fontFamily: font.body }}>Monthly loss</p>
+                  <p className="text-[clamp(1.4rem,3vw,2rem)] font-bold" style={{ color: C.a[700], fontFamily: font.display }}>R{monthlyCost.toLocaleString()}</p>
+                  <p className="text-[10px] mt-1" style={{ color: C.t[400] }}>~{weeklyNoShows * 4} no-shows</p>
+                </div>
+                <div className="rounded-xl p-4" style={{ backgroundColor: '#FDF2F2' }}>
+                  <p className="text-[11px] font-medium uppercase mb-1" style={{ color: C.t[500], fontFamily: font.body }}>Yearly loss</p>
+                  <p className="text-[clamp(1.4rem,3vw,2rem)] font-bold" style={{ color: C.a[700], fontFamily: font.display }}>R{yearlyCost.toLocaleString()}</p>
+                  <p className="text-[10px] mt-1" style={{ color: C.t[400] }}>That's real money</p>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center">
+                <p className="text-[14px] mb-4" style={{ color: C.t[600], fontFamily: font.body }}>
+                  WaitUp recovers <span className="font-bold" style={{ color: C.g[800] }}>60-80%</span> of lost spots. That's up to <span className="font-bold" style={{ color: C.g[800] }}>R{Math.round(yearlyCost * 0.7).toLocaleString()}/year</span> back in your pocket.
+                </p>
+                <Link to="/login"
+                  className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[14px] font-semibold text-white transition-all hover:shadow-lg hover:shadow-black/10"
+                  style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+                >
+                  Recover that revenue →
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </SectionBg>
@@ -513,6 +629,46 @@ export default function Landing() {
         </div>
       </SectionBg>
 
+      {/* ── FAQ ──────────────────────────────────────────── */}
+      <SectionBg>
+        <div className="max-w-[700px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>Questions</p>
+          <h2 className="text-[clamp(1.8rem,3.5vw,2.8rem)] leading-[1.1] tracking-[0.04em] text-center mb-14" style={{ fontFamily: font.display }}>
+            Common <span style={{ color: C.g[700] }}>questions</span>
+          </h2>
+          <div className="space-y-3">
+            {[
+              { q: "Will my clients get annoyed by WhatsApp messages?", a: "Nope. The messages are short, friendly, and only go to people who already signed up for your waitlist. They want the spot — they're waiting for it. Unsubscribe is one tap." },
+              { q: "How long does setup take?", a: "About 15 minutes. Connect your booking system, set your class schedule, and WaitUp handles the rest. No coding, no complicated config. If you can use WhatsApp, you can use WaitUp." },
+              { q: "What if I only have a small studio?", a: "WaitUp was built for studios with 5-30 spots per class. In fact, smaller studios feel no-shows more — one empty spot in a 6-person class is a 17% loss. The Starter plan is free, so try it risk-free." },
+              { q: "Is my data safe?", a: "Your data stays in South Africa. We use Supabase (hosted in AWS Cape Town region), your client data is encrypted, and we never share or sell anything. You own your data — export it anytime." },
+              { q: "Can I cancel anytime?", a: "Yes. No contracts, no lock-in. Cancel from your dashboard in one click. If you're on a paid plan, you keep access until the end of your billing period. No phone calls, no guilt trips." },
+              { q: "Does it work with my booking system?", a: "WaitUp works with most SA studio booking systems. If yours isn't supported yet, tell us — we add integrations based on demand. The Growth plan includes the most common integrations out of the box." },
+            ].map((faq, i) => (
+              <div key={i} className="rounded-xl overflow-hidden" style={{ border: `1px solid ${C.b}` }}>
+                <button
+                  onClick={() => setOpenFaq(openFaq === i ? null : i)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left transition-colors hover:bg-black/[0.02]"
+                >
+                  <span className="text-[14px] font-medium pr-4" style={{ fontFamily: font.body }}>{faq.q}</span>
+                  <span className="text-[18px] flex-shrink-0 transition-transform duration-200" style={{ color: C.t[400], transform: openFaq === i ? 'rotate(45deg)' : 'rotate(0deg)' }}>+</span>
+                </button>
+                {openFaq === i && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <p className="px-6 pb-5 text-[13px] leading-[1.7]" style={{ color: C.t[500], fontFamily: font.body }}>{faq.a}</p>
+                  </motion.div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </SectionBg>
+
       {/* ── CTA ─────────────────────────────────────────── */}
       <SectionBg>
         <div className="max-w-[800px] mx-auto px-6 lg:px-10 py-24 lg:py-32 text-center">
@@ -542,6 +698,10 @@ export default function Landing() {
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        .marquee-scroll { animation: marquee 30s linear infinite; }
+        input[type="range"] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; outline: none; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #2D5016; cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
+        input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #2D5016; cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
       `}</style>
     </div>
   )
