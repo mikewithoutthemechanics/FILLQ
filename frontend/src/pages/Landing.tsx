@@ -1,5 +1,5 @@
-import { motion, useInView } from 'framer-motion'
-import { useRef, useState, useEffect } from 'react'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
+import { useRef, useState, useEffect, useCallback } from 'react'
 import { Link } from 'react-router-dom'
 import {
   TrendingUp,
@@ -14,9 +14,10 @@ import {
   Users,
   BarChart3,
   Heart,
+  X,
+  MessageSquare,
 } from 'lucide-react'
 import TextRotate from '../components/TextRotate'
-import HolographicCard from '../components/HolographicCard'
 
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
@@ -71,13 +72,38 @@ export default function Landing() {
   const [calcNoShowRate, setCalcNoShowRate] = useState(25)
   const [calcPrice, setCalcPrice] = useState(150)
   const [openFaq, setOpenFaq] = useState<number | null>(null)
+  const [showVideo, setShowVideo] = useState(false)
+  const [showExitIntent, setShowExitIntent] = useState(false)
+  const [exitEmail, setExitEmail] = useState('')
+  const [exitSubmitted, setExitSubmitted] = useState(false)
   const dashboardRef = useRef<HTMLDivElement>(null)
+  const exitShown = useRef(false)
 
   useEffect(() => {
     const onScroll = () => setScroll(window.scrollY)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  // Exit intent detection (desktop: mouse leaves viewport, mobile: back navigation)
+  const handleExitIntent = useCallback((e: MouseEvent) => {
+    if (exitShown.current) return
+    if (e.clientY <= 0) {
+      exitShown.current = true
+      setShowExitIntent(true)
+    }
+  }, [])
+
+  useEffect(() => {
+    // Only trigger after 10s on page (don't scare first-time visitors)
+    const timer = setTimeout(() => {
+      document.addEventListener('mouseleave', handleExitIntent)
+    }, 10000)
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('mouseleave', handleExitIntent)
+    }
+  }, [handleExitIntent])
 
   const scrollToDashboard = () => {
     dashboardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -125,8 +151,17 @@ export default function Landing() {
         </div>
       </nav>
 
+      {/* ── URGENCY BANNER ──────────────────────────────── */}
+      <div className="fixed top-[72px] left-0 right-0 z-40 text-center py-2.5 px-4"
+        style={{ backgroundColor: C.a[600], color: '#fff', fontFamily: font.body }}
+      >
+        <p className="text-[13px] font-medium">
+          🔥 Limited: Only onboarding <span className="font-bold">12 new studios</span> this month — 7 spots left
+        </p>
+      </div>
+
       {/* ── HERO ────────────────────────────────────────── */}
-      <section className="relative pt-32 pb-20 lg:pt-44 lg:pb-32">
+      <section className="relative pt-36 pb-20 lg:pt-48 lg:pb-32">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-[0.07]"
             style={{ background: `radial-gradient(ellipse, ${C.g[700]}, transparent 70%)` }} />
@@ -168,7 +203,7 @@ export default function Landing() {
                   Start free, no card needed
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
                 </Link>
-                <button onClick={scrollToDashboard}
+                <button onClick={() => setShowVideo(true)}
                   className="px-7 py-4 rounded-full text-[15px] font-medium flex items-center gap-2 transition-all hover:bg-black/5"
                   style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
                 >
@@ -357,6 +392,62 @@ export default function Landing() {
                 <div className="mt-5 h-[3px] w-10 rounded-full" style={{ backgroundColor: step.color }} />
               </Reveal>
             ))}
+          </div>
+        </div>
+      </SectionBg>
+
+      {/* ── COMPARISON ──────────────────────────────────── */}
+      <SectionBg style={{ backgroundColor: '#fff' }}>
+        <div className="max-w-[900px] mx-auto px-6 lg:px-10 py-24 lg:py-32">
+          <p className="text-[12px] font-medium tracking-[0.15em] uppercase mb-3 text-center" style={{ color: C.g[700], fontFamily: font.body }}>The difference</p>
+          <h2 className="text-[clamp(1.8rem,4vw,2.8rem)] leading-[1.1] tracking-[0.04em] text-center mb-14" style={{ fontFamily: font.display }}>
+            WaitUp vs <span style={{ color: C.t[400] }}>doing it yourself</span>
+          </h2>
+
+          <div className="rounded-2xl overflow-hidden" style={{ border: `1px solid ${C.b}` }}>
+            {/* Table header */}
+            <div className="grid grid-cols-3 text-[13px] font-semibold" style={{ backgroundColor: C.g[50], borderBottom: `1px solid ${C.b}` }}>
+              <div className="px-6 py-4" style={{ color: C.t[500], fontFamily: font.body }}></div>
+              <div className="px-6 py-4 text-center" style={{ color: C.t[500], fontFamily: font.body }}>DIY / Manual</div>
+              <div className="px-6 py-4 text-center" style={{ color: C.g[800], fontFamily: font.body }}>
+                <span className="inline-flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5" /> WaitUp
+                </span>
+              </div>
+            </div>
+            {[
+              { label: 'Time spent daily', manual: '~30 min texting', waitup: '0 min (automated)', icon: <Clock className="w-4 h-4" /> },
+              { label: 'Spot fill speed', manual: 'Hours (if at all)', waitup: '<8 minutes avg', icon: <Zap className="w-4 h-4" /> },
+              { label: 'Churn detection', manual: 'Gut feeling', waitup: 'AI risk scoring', icon: <Heart className="w-4 h-4" /> },
+              { label: 'No-show tracking', manual: 'Spreadsheet (maybe)', waitup: 'Real-time dashboard', icon: <BarChart3 className="w-4 h-4" /> },
+              { label: 'Monthly cost', manual: 'Your time (priceless)', waitup: 'From R299/mo', icon: <Shield className="w-4 h-4" /> },
+              { label: 'Revenue recovered', manual: 'Hope', waitup: 'R4,000-8,000/mo avg', icon: <TrendingUp className="w-4 h-4" /> },
+            ].map((row, i) => (
+              <div key={i} className="grid grid-cols-3 items-center" style={{ borderBottom: i < 5 ? `1px solid ${C.b}` : 'none' }}>
+                <div className="px-6 py-4 flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style={{ backgroundColor: C.g[50], color: C.g[700] }}>
+                    {row.icon}
+                  </div>
+                  <span className="text-[13px] font-medium" style={{ fontFamily: font.body }}>{row.label}</span>
+                </div>
+                <div className="px-6 py-4 text-center">
+                  <span className="text-[13px] line-through opacity-60" style={{ color: C.t[500], fontFamily: font.body }}>{row.manual}</span>
+                </div>
+                <div className="px-6 py-4 text-center">
+                  <span className="text-[13px] font-semibold" style={{ color: C.g[800], fontFamily: font.body }}>{row.waitup}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link to="/login"
+              className="group inline-flex items-center gap-2 px-7 py-3.5 rounded-full text-[14px] font-semibold text-white transition-all hover:shadow-lg hover:shadow-black/10"
+              style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+            >
+              Switch to WaitUp — start free
+              <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </Link>
           </div>
         </div>
       </SectionBg>
@@ -593,17 +684,27 @@ export default function Landing() {
               { name: 'Enterprise', price: 'Custom', desc: 'Chains & franchises', features: ['Unlimited studios', 'White-label', 'Dedicated support', 'Custom integrations'], hl: false, cta: 'Contact Us' },
             ].map((plan, i) => (
               <Reveal key={i} delay={i * 0.08}>
-                <HolographicCard highlighted={plan.hl}>
-                  <div className="p-7 h-full flex flex-col"
-                    style={{ color: plan.hl ? '#fff' : C.t[900] }}
-                  >
+                <div className="relative rounded-2xl h-full flex flex-col"
+                  style={{
+                    backgroundColor: plan.hl ? C.g[800] : '#fff',
+                    border: plan.hl ? `2px solid ${C.g[700]}` : `1px solid ${C.b}`,
+                    boxShadow: plan.hl ? '0 8px 32px rgba(45,80,22,0.2)' : '0 1px 3px rgba(0,0,0,0.04)',
+                    color: plan.hl ? '#fff' : C.t[900],
+                  }}
+                >
+                  {plan.hl && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider"
+                      style={{ backgroundColor: C.a[600], color: '#fff' }}
+                    >Most Popular</div>
+                  )}
+                  <div className="p-7 flex flex-col flex-1">
                     <p className="text-[11px] font-semibold uppercase" style={{ color: plan.hl ? 'rgba(255,255,255,0.6)' : C.t[400], fontFamily: font.body, letterSpacing: '0.1em' }}>{plan.name}</p>
                     <div className="mt-3 flex items-baseline gap-1">
                       <span className="text-[36px] font-bold leading-none" style={{ fontFamily: font.display }}>{plan.price}</span>
                       {plan.price !== 'Free' && plan.price !== 'Custom' && <span className="text-[13px]" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>{plan.desc}</span>}
                     </div>
-                    {plan.price === 'Free' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>No card needed</p>}
-                    {plan.price === 'Custom' && <p className="text-[12px] mt-1" style={{ color: plan.hl ? 'rgba(255,255,255,0.5)' : C.t[400] }}>Let's talk</p>}
+                    {plan.price === 'Free' && <p className="text-[12px] mt-1" style={{ color: C.t[400] }}>No card needed</p>}
+                    {plan.price === 'Custom' && <p className="text-[12px] mt-1" style={{ color: C.t[400] }}>Let's talk</p>}
                     <ul className="mt-6 space-y-3 flex-1">
                       {plan.features.map((f, j) => (
                         <li key={j} className="flex items-start gap-2.5 text-[13px]" style={{ fontFamily: font.body }}>
@@ -622,7 +723,7 @@ export default function Landing() {
                       }}
                     >{plan.cta}</Link>
                   </div>
-                </HolographicCard>
+                </div>
               </Reveal>
             ))}
           </div>
@@ -695,6 +796,149 @@ export default function Landing() {
           <p className="text-[12px]" style={{ color: C.t[400], fontFamily: font.body }}>Built for South African studios 🇿🇦 · © 2026</p>
         </div>
       </footer>
+
+      {/* ── WHATSAPP FLOATING WIDGET ──────────────────────── */}
+      <a
+        href="https://wa.me/27837915429?text=Hey%20WaitUp%2C%20I%20run%20a%20yoga%20studio%20and%20want%20to%20reduce%20no-shows"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full flex items-center justify-center shadow-lg shadow-black/20 transition-all hover:scale-110 hover:shadow-xl"
+        style={{ backgroundColor: '#25D366' }}
+        aria-label="Chat on WhatsApp"
+      >
+        <MessageSquare className="w-6 h-6 text-white" />
+      </a>
+
+      {/* ── VIDEO MODAL ──────────────────────────────────── */}
+      <AnimatePresence>
+        {showVideo && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.8)' }}
+            onClick={() => setShowVideo(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="relative w-full max-w-[900px] rounded-2xl overflow-hidden"
+              style={{ backgroundColor: '#000', aspectRatio: '16/9' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowVideo(false)}
+                className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full flex items-center justify-center transition-colors"
+                style={{ backgroundColor: 'rgba(255,255,255,0.1)' }}
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+              {/* Replace this div with an actual <iframe> or <video> when you have a demo video */}
+              <div className="w-full h-full flex flex-col items-center justify-center text-center p-8">
+                <Play className="w-16 h-16 mb-6" style={{ color: C.g[400] }} />
+                <h3 className="text-white text-[22px] font-semibold mb-2" style={{ fontFamily: font.display }}>Demo video coming soon</h3>
+                <p className="text-[14px] mb-6" style={{ color: 'rgba(255,255,255,0.5)', fontFamily: font.body }}>
+                  In the meantime, scroll down to see the live dashboard preview
+                </p>
+                <button
+                  onClick={() => { setShowVideo(false); scrollToDashboard() }}
+                  className="px-6 py-3 rounded-full text-[14px] font-semibold text-white transition-all hover:shadow-lg"
+                  style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+                >
+                  See the dashboard →
+                </button>
+                <p className="mt-6 text-[11px]" style={{ color: 'rgba(255,255,255,0.3)', fontFamily: font.body }}>
+                  To add your Loom/video: replace this div with {'<iframe src="https://www.loom.com/embed/YOUR_VIDEO_ID" />'}
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── EXIT INTENT POPUP ────────────────────────────── */}
+      <AnimatePresence>
+        {showExitIntent && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}
+            onClick={() => setShowExitIntent(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.9, y: 20, opacity: 0 }}
+              className="relative w-full max-w-[480px] rounded-2xl p-8 lg:p-10 text-center"
+              style={{ backgroundColor: '#fff', boxShadow: '0 24px 64px rgba(0,0,0,0.2)' }}
+              onClick={e => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowExitIntent(false)}
+                className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-colors hover:bg-black/5"
+              >
+                <X className="w-4 h-4" style={{ color: C.t[400] }} />
+              </button>
+
+              {!exitSubmitted ? (
+                <>
+                  <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: C.a[100] }}>
+                    <TrendingUp className="w-7 h-7" style={{ color: C.a[600] }} />
+                  </div>
+                  <h3 className="text-[22px] font-semibold mb-2" style={{ fontFamily: font.display }}>
+                    Before you go...
+                  </h3>
+                  <p className="text-[14px] mb-6 leading-[1.6]" style={{ color: C.t[500], fontFamily: font.body }}>
+                    Your studio could be losing <span className="font-bold" style={{ color: C.a[700] }}>R{monthlyCost.toLocaleString()}/month</span> to no-shows. 
+                    Get our free guide: <span className="font-semibold">"5 Ways SA Studios Are Fixing No-Shows in 2026"</span>
+                  </p>
+                  <div className="flex gap-2">
+                    <input
+                      type="email"
+                      value={exitEmail}
+                      onChange={e => setExitEmail(e.target.value)}
+                      placeholder="your@email.co.za"
+                      className="flex-1 px-4 py-3 rounded-xl text-[14px] outline-none transition-all"
+                      style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
+                      onFocus={e => e.target.style.borderColor = C.g[800]}
+                      onBlur={e => e.target.style.borderColor = C.b}
+                    />
+                    <button
+                      onClick={() => { if (exitEmail.includes('@')) setExitSubmitted(true) }}
+                      className="px-5 py-3 rounded-xl text-[14px] font-semibold text-white transition-all hover:shadow-md flex-shrink-0"
+                      style={{ backgroundColor: C.g[800], fontFamily: font.body }}
+                    >
+                      Send it
+                    </button>
+                  </div>
+                  <p className="text-[11px] mt-3" style={{ color: C.t[400], fontFamily: font.body }}>No spam. Unsubscribe anytime.</p>
+                </>
+              ) : (
+                <>
+                  <div className="w-14 h-14 rounded-2xl mx-auto mb-5 flex items-center justify-center" style={{ backgroundColor: C.g[100] }}>
+                    <Check className="w-7 h-7" style={{ color: C.g[800] }} />
+                  </div>
+                  <h3 className="text-[22px] font-semibold mb-2" style={{ fontFamily: font.display }}>Check your inbox 📬</h3>
+                  <p className="text-[14px]" style={{ color: C.t[500], fontFamily: font.body }}>
+                    We've sent the guide to <span className="font-semibold">{exitEmail}</span>
+                  </p>
+                  <button
+                    onClick={() => setShowExitIntent(false)}
+                    className="mt-6 px-6 py-2.5 rounded-full text-[13px] font-medium transition-all hover:bg-black/5"
+                    style={{ border: `1.5px solid ${C.b}`, fontFamily: font.body }}
+                  >
+                    Back to site
+                  </button>
+                </>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
