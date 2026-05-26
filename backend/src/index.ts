@@ -12,6 +12,7 @@ import churnRouter from './routes/churn.js';
 import dashboardRouter from './routes/dashboard.js';
 import settingsRouter from './routes/settings.js';
 import whatsappRouter from './routes/whatsapp.js';
+import subscriptionRouter from './routes/subscription.js';
 import { supabaseAuthMiddleware, optionalAuthMiddleware } from './middleware/supabaseAuth.js';
 
 // Load environment variables
@@ -55,6 +56,7 @@ app.use('/api/filliq/churn', churnRouter);
 app.use('/api/filliq/dashboard', dashboardRouter);
 app.use('/api/filliq/settings', settingsRouter);
 app.use('/api/filliq/whatsapp', whatsappRouter);
+app.use('/api/filliq/subscription', subscriptionRouter);
 
 // Root endpoint
 app.get('/', (req, res) => {
@@ -69,7 +71,8 @@ app.get('/', (req, res) => {
       churn: '/api/filliq/churn',
       dashboard: '/api/filliq/dashboard',
       settings: '/api/filliq/settings',
-      whatsapp: '/api/filliq/whatsapp'
+      whatsapp: '/api/filliq/whatsapp',
+      subscription: '/api/filliq/subscription'
     }
   });
 });

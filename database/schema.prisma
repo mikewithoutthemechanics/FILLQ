@@ -179,35 +179,43 @@ model PendingInvite {
 model FillIQSettings {
   id                        String   @id @default(uuid())
   studioId                  String   @unique
-  
+   
   // Waitlist engine settings
   maxSimultaneousInvites    Int      @default(3)
   inviteExpiryMinutes       Int      @default(30)
   autoExpandAfterMinutes    Int      @default(30)
   autoFillEnabled           Boolean  @default(true)
-  
+   
   // Rebook nudge settings
   rebookNudgeEnabled        Boolean  @default(true)
   rebookNudgeDelayMinutes   Int      @default(45)
-  
+   
   // Churn settings
   churnScoreThreshold       Int      @default(65)
   autoNudgeThreshold        Int      @default(80)
   autoNudgeEnabled          Boolean  @default(false)
   churnNudgeCooldownDays    Int      @default(14)
-  
+   
   // WhatsApp settings (encrypted at rest)
   wabaProvider              String   @default("360dialog") // '360dialog' | 'vonage'
   wabaPhoneNumberId         String?
   wabaAccessTokenEncrypted  String?
   studioWhatsAppNumber      String?
-  
+   
   // Revenue settings
   defaultClassPrice         Decimal  @default(150.00) @db.Decimal(10, 2)
   
+  // Subscription management
+  subscriptionTier          String   @default("starter") // 'starter' | 'growth' | 'professional' | 'enterprise'
+  subscriptionStatus        String   @default("active")  // 'active' | 'past_due' | 'canceled' | 'unpaid'
+  subscriptionStartedAt     DateTime?
+  subscriptionEndsAt        DateTime?
+  stripeCustomerId          String?
+  stripeSubscriptionId      String?
+   
   createdAt                 DateTime @default(now())
   updatedAt                 DateTime @updatedAt
-
+   
   @@map("filliq_settings")
 }
 
