@@ -18,6 +18,8 @@ import {
   MessageSquare,
 } from 'lucide-react'
 import TextRotate from '../components/TextRotate'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 /* ── Colours ────────────────────────────────────────────── */
 const C = {
@@ -105,6 +107,60 @@ export default function Landing() {
     }
   }, [handleExitIntent])
 
+  // GSAP animations
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger)
+    
+    const ctx = gsap.context(() => {
+      // Parallax background elements
+      const parallaxElements = document.querySelectorAll('.parallax-element')
+      parallaxElements.forEach((el, i) => {
+        gsap.to(el, {
+          y: -100 * (i + 1),
+          ease: 'none',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true,
+          }
+        })
+      })
+
+      // Floating animation for hero elements
+      gsap.to('.hero-float', {
+        y: -20,
+        duration: 3,
+        repeat: -1,
+        yoyo: true,
+        ease: 'power1.inOut',
+        stagger: 0.5
+      })
+
+      // Mouse parallax effect on dashboard preview
+      const dashboardPreview = document.querySelector('.dashboard-preview')
+      if (dashboardPreview) {
+        let mouseX = 0, mouseY = 0
+        
+        const handleMouseMove = (e: MouseEvent) => {
+          mouseX = (e.clientX / window.innerWidth - 0.5) * 20
+          mouseY = (e.clientY / window.innerHeight - 0.5) * 20
+          gsap.to(dashboardPreview, {
+            x: mouseX,
+            y: mouseY,
+            duration: 0.5,
+            ease: 'power2.out'
+          })
+        }
+        
+        document.addEventListener('mousemove', handleMouseMove)
+        return () => document.removeEventListener('mousemove', handleMouseMove)
+      }
+    })
+
+    return () => ctx.revert()
+  }, [])
+
   const scrollToDashboard = () => {
     dashboardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
@@ -163,8 +219,13 @@ export default function Landing() {
       {/* ── HERO ────────────────────────────────────────── */}
       <section className="relative pt-36 pb-20 lg:pt-48 lg:pb-32">
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full opacity-[0.07]"
-            style={{ background: `radial-gradient(ellipse, ${C.g[700]}, transparent 70%)` }} />
+          {/* Parallax background layers */}
+          <div className="parallax-element absolute top-20 left-10 w-72 h-72 rounded-full opacity-10 blur-3xl"
+            style={{ background: `radial-gradient(circle, ${C.g[700]}, transparent 70%)` }} />
+          <div className="parallax-element absolute bottom-40 right-20 w-96 h-96 rounded-full opacity-5 blur-3xl"
+            style={{ background: `radial-gradient(circle, ${C.a[600]}, transparent 70%)` }} />
+          <div className="parallax-element absolute top-1/2 left-1/3 w-48 h-48 rounded-full opacity-8 blur-2xl"
+            style={{ background: C.g[300] }} />
         </div>
 
         <div className="relative max-w-[1200px] mx-auto px-6 lg:px-10">
@@ -239,7 +300,7 @@ export default function Landing() {
               initial={{ opacity: 0, y: 40, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.15, duration: 0.6, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] }}
-              className="w-full"
+              className="w-full dashboard-preview"
             >
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/[0.1]"
                 style={{ border: `1px solid ${C.b}`, backgroundColor: '#fff' }}
@@ -943,6 +1004,10 @@ export default function Landing() {
       <style>{`
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .marquee-scroll { animation: marquee 30s linear infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        .parallax-bg { will-change: transform; backface-visibility: hidden; }
+        .micro-scale:hover { transform: scale(1.02); transition: transform 0.2s ease; }
+        .micro-rotate:hover { transform: rotate(3deg); transition: transform 0.3s ease; }
         input[type="range"] { -webkit-appearance: none; appearance: none; height: 8px; border-radius: 4px; outline: none; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #2D5016; cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }
         input[type="range"]::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #2D5016; cursor: pointer; border: 3px solid white; box-shadow: 0 1px 4px rgba(0,0,0,0.15); }

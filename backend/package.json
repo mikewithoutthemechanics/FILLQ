@@ -14,7 +14,7 @@
     "db:deploy": "prisma migrate deploy"
   },
   "dependencies": {
-    "@prisma/client": "^5.7.1",
+    "@prisma/client": "^5.22.0",
     "@supabase/supabase-js": "^2.100.1",
     "axios": "^1.6.2",
     "bullmq": "^5.0.0",
@@ -25,6 +25,7 @@
     "helmet": "^7.1.0",
     "ioredis": "^5.3.2",
     "node-cron": "^3.0.3",
+    "prisma": "^7.8.0",
     "winston": "^3.11.0"
   },
   "devDependencies": {
@@ -35,7 +36,6 @@
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8.56.0",
-    "prisma": "^5.7.1",
     "tsx": "^4.7.0",
     "typescript": "^5.3.3"
   }

@@ -26,21 +26,6 @@ export function startMonthlyReportJob(): void {
       // Generate and save report
       await service.saveMonthlyReport(year, prevMonth, studioId);
 
-      // Get report for email
-      const report = await service.generateMonthlyReport(year, prevMonth);
-
-      // In production, send email to studio owner
-      console.log('[MonthlyReportJob] Monthly report generated:', {
-        year,
-        month: prevMonth,
-        revenueRecovered: report.revenueRecovered,
-        spotsFilled: report.spotsFilled,
-        fillRate: report.fillRate
-      });
-
-      // TODO: Send email notification
-      // await sendMonthlyReportEmail(studioId, report);
-
     } catch (error) {
       console.error('[MonthlyReportJob] Error generating monthly report:', error);
     }
@@ -62,6 +47,7 @@ function generateReportEmail(report: {
   avgFillTimeMinutes: number;
   churnsPrevented: number;
   fillRate: number;
+  atRiskMembersFlagged?: number;
 }): string {
   const monthName = new Date(report.year, report.month - 1).toLocaleString('en-ZA', { month: 'long' });
 

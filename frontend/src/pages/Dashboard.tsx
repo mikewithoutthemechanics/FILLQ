@@ -3,6 +3,8 @@ import { supabase } from '../hooks/useSupabase'
 import { TrendingUp, Users, Shield, RefreshCw, AlertTriangle, Calendar } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { motion, AnimatePresence } from 'framer-motion'
+import { gsap } from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
 
 // ── Colors ──────────────────────────────────────────────
 const C = {
@@ -140,6 +142,24 @@ export default function Dashboard() {
     const t = setInterval(() => setTick(v => v + 1), 10000)
     return () => clearInterval(t)
   }, [])
+
+  // GSAP animations for dashboard elements
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger)
+    
+    const ctx = gsap.context(() => {
+      // Staggered fade-in for metric cards
+      gsap.from('.metric-card', {
+        opacity: 0,
+        y: 30,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: 'power2.out'
+      })
+    })
+    
+    return () => ctx.revert()
+  }, [loading])
 
   function timeAgo(date: Date): string {
     const seconds = Math.floor((Date.now() - date.getTime()) / 1000)

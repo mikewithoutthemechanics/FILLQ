@@ -79,8 +79,8 @@ export class DashboardService {
       : 0;
 
     return {
-      revenueRecovered,
-      spotsFilled,
+      revenueRecoveredThisMonth: revenueRecovered,
+      spotsFilledThisMonth: spotsFilled,
       avgFillTimeMinutes,
       churnsPreventedThisMonth: churnMetrics.churnsPrevented,
       fillRatePercentage
