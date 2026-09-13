@@ -3,7 +3,7 @@ import { query, body } from 'express-validator';
 import { prisma } from '../lib/supabase.js';
 import { optionalAuthMiddleware } from '../middleware/supabaseAuth.js';
 import { validateRequest } from '../middleware/validation.js';
-import { encryptText, decryptText } from '../lib/crypto.js';
+import { encryptText } from '../lib/crypto.js';
 import { logger } from '../lib/logger.js';
 
 const router = Router();
@@ -27,7 +27,6 @@ router.get(
       });
 
       if (!settings) {
-        // Create default settings
         settings = await prisma.fillIQSettings.create({
           data: {
             studioId
@@ -35,7 +34,6 @@ router.get(
         });
       }
 
-      // Remove sensitive encrypted token from response
       const { wabaAccessTokenEncrypted, ...safeSettings } = settings as any;
 
       res.json({
@@ -65,7 +63,6 @@ router.put(
       const studioId = (req.query.studioId as string) || req.user?.studioId || 'default-studio';
       const updateData = { ...req.body };
 
-      // Remove fields that shouldn't be updated directly
       delete updateData.id;
       delete updateData.studioId;
       delete updateData.createdAt;
@@ -104,9 +101,9 @@ router.put(
   '/whatsapp',
   [
     query('studioId').optional().isString().trim(),
-    body('wabaProvider').optional().isString().trim(),
+    body('wabaProvider').optional().isString().trim().isIn(['360dialog', 'vonage']),
     body('wabaPhoneNumberId').optional().isString().trim(),
-    body('wabaAccessToken').optional().isString().trim(),
+    body('wabaAccessToken').optional().isString().trim().isLength({ min: 10 }).withMessage('wabaAccessToken must be at least 10 characters'),
     body('studioWhatsAppNumber').optional().isString().trim()
   ],
   validateRequest,
@@ -125,7 +122,6 @@ router.put(
       if (wabaPhoneNumberId) updateData.wabaPhoneNumberId = wabaPhoneNumberId;
       if (studioWhatsAppNumber) updateData.studioWhatsAppNumber = studioWhatsAppNumber;
 
-      // Encrypt sensitive WABA token before saving
       if (wabaAccessToken) {
         updateData.wabaAccessTokenEncrypted = encryptText(wabaAccessToken);
       }

@@ -7,24 +7,37 @@ import { logger } from '../lib/logger.js';
 /**
  * Churn Scoring Job
  * 
- * Runs nightly at 2 AM SAST to score all members for churn risk
+ * Runs nightly at 2 AM SAST to score all members for churn risk across all studios
  */
 export function startChurnJob(): void {
   cron.schedule('0 2 * * *', async () => {
-    logger.info('[ChurnJob] Running churn scoring...');
+    logger.info('[ChurnJob] Running churn scoring across studios...');
 
     try {
-      const studioId = 'default-studio';
-      
-      const scorer = new ChurnScorer(studioId);
-      await scorer.initialize();
+      // Query distinct studio IDs from filliq_settings
+      const settings = await prisma.fillIQSettings.findMany({
+        select: { studioId: true }
+      });
 
-      const results = await scorer.runChurnScoring();
+      const studioIds = settings.length > 0
+        ? settings.map(s => s.studioId)
+        : ['default-studio'];
 
-      logger.info('[ChurnJob] Churn scoring complete:', results);
+      for (const studioId of studioIds) {
+        try {
+          const scorer = new ChurnScorer(studioId);
+          await scorer.initialize();
 
-      if (results.autoNudgedCount > 0) {
-        await sendAutoNudges(studioId);
+          const results = await scorer.runChurnScoring();
+
+          logger.info(`[ChurnJob] Studio ${studioId} churn scoring complete:`, results);
+
+          if (results.autoNudgedCount > 0) {
+            await sendAutoNudges(studioId);
+          }
+        } catch (studioErr) {
+          logger.error(`[ChurnJob] Error scoring studio ${studioId}:`, studioErr);
+        }
       }
     } catch (error) {
       logger.error('[ChurnJob] Error in churn job:', error);
@@ -40,15 +53,18 @@ async function sendAutoNudges(studioId: string): Promise<void> {
   try {
     const whatsapp = await createWhatsAppService(studioId);
     if (!whatsapp) {
-      logger.info('[ChurnJob] WhatsApp not configured, skipping auto-nudges');
+      logger.info(`[ChurnJob] WhatsApp not configured for ${studioId}, skipping auto-nudges`);
       return;
     }
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
 
     const criticalSignals = await prisma.memberChurnSignal.findMany({
       where: {
         churnScore: { gte: 80 },
         actionTaken: null,
-        signalDate: new Date()
+        signalDate: { gte: startOfDay }
       },
       include: {
         churnMember: true

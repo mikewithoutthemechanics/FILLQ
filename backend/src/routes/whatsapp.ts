@@ -7,28 +7,39 @@ import { logger } from '../lib/logger.js';
 const router = Router();
 
 /**
- * Verify Meta / WhatsApp webhook signature if secret configured
+ * Verify Meta / WhatsApp webhook signature
  */
 function verifyWebhookSignature(req: any): boolean {
   const appSecret = process.env.WABA_APP_SECRET;
+
   if (!appSecret) {
-    // If secret not set, default to true in dev/staging mode
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('WABA_APP_SECRET is not configured in production. Rejecting webhook.');
+      return false;
+    }
+    // Allow unverified webhooks only in development testing when secret is unset
     return true;
   }
 
   const signature = req.headers['x-hub-signature-256'] as string;
   if (!signature) return false;
 
-  const expectedSignature = 'sha256=' + crypto
+  const expectedHex = crypto
     .createHmac('sha256', appSecret)
     .update(JSON.stringify(req.body))
     .digest('hex');
 
+  const expectedSignature = `sha256=${expectedHex}`;
+
+  const sigBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expectedSignature);
+
+  if (sigBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
   try {
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    return crypto.timingSafeEqual(sigBuffer, expectedBuffer);
   } catch (err) {
     return false;
   }
@@ -78,11 +89,9 @@ router.post('/webhook', async (req: any, res: any) => {
       }
     }
 
-    // Always return 200 to acknowledge receipt
     res.status(200).send('OK');
   } catch (error) {
     logger.error('Webhook processing error:', error);
-    // Return 200 to acknowledge receipt and prevent WABA retries loop
     res.status(200).send('OK');
   }
 });

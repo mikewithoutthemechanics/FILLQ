@@ -1,23 +1,27 @@
 import { createClient } from '@supabase/supabase-js'
 import { PrismaClient } from '@prisma/client'
 
+const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || 'placeholder-anon-key';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder-service-key';
+
 // Supabase Auth client
 export const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!
+  supabaseUrl,
+  supabaseAnonKey
 )
 
 // Admin client (for server-side operations)
 export const supabaseAdmin = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  supabaseUrl,
+  supabaseServiceKey
 )
 
 // Prisma with Supabase connection pooling
 export const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: process.env.DATABASE_URL,
+      url: process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/filliq',
     },
   },
 })

@@ -1,4 +1,5 @@
 import winston from 'winston';
+import path from 'path';
 
 const logFormat = winston.format.combine(
   winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
@@ -6,6 +7,8 @@ const logFormat = winston.format.combine(
   winston.format.splat(),
   winston.format.json()
 );
+
+const logDir = process.env.LOG_DIR || 'logs';
 
 export const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -22,6 +25,17 @@ export const logger = winston.createLogger({
           }
         )
       )
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5
     })
   ]
 });

@@ -1,10 +1,11 @@
-import { test, describe, it } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { NoShowScorer } from '../services/NoShowScorer.js';
 import { ChurnScorer } from '../services/ChurnScorer.js';
+import { WhatsAppService } from '../services/WhatsAppService.js';
 import { encryptText, decryptText } from '../lib/crypto.js';
 
-describe('Crypto Utilities', () => {
+describe('Crypto Utilities Unit Tests', () => {
   it('should correctly encrypt and decrypt plain text', () => {
     const plainText = 'my-secret-waba-token-12345';
     const encrypted = encryptText(plainText);
@@ -14,13 +15,34 @@ describe('Crypto Utilities', () => {
     assert.strictEqual(decrypted, plainText);
   });
 
-  it('should return plain text gracefully if given empty or non-encrypted string', () => {
+  it('should return empty string as-is', () => {
     assert.strictEqual(encryptText(''), '');
-    assert.strictEqual(decryptText('short-str'), 'short-str');
+  });
+
+  it('should throw error when decrypting invalid payload', () => {
+    assert.throws(() => {
+      decryptText('invalid-base64');
+    });
   });
 });
 
-describe('NoShowScorer Unit Tests', () => {
+describe('WhatsAppService Phone Formatter Unit Tests', () => {
+  const service = new WhatsAppService({
+    provider: '360dialog',
+    phoneNumberId: '12345',
+    accessToken: 'test-token'
+  });
+
+  it('should convert local SA 0-prefixed numbers to international format', () => {
+    assert.strictEqual(service.formatPhoneNumber('0831234567'), '+27831234567');
+  });
+
+  it('should leave already formatted numbers starting with + intact', () => {
+    assert.strictEqual(service.formatPhoneNumber('+27831234567'), '+27831234567');
+  });
+});
+
+describe('NoShowScorer Pure Logic Unit Tests', () => {
   const scorer = new NoShowScorer();
 
   it('should score high risk for last-minute booking with high no-show history', () => {
@@ -58,7 +80,7 @@ describe('NoShowScorer Unit Tests', () => {
   });
 });
 
-describe('ChurnScorer Unit Tests', () => {
+describe('ChurnScorer Pure Logic Unit Tests', () => {
   const churn = new ChurnScorer('test-studio');
 
   it('should classify critical risk when member has been absent for >21 days and dropped attendance rate', () => {

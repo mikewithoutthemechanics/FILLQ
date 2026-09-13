@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { noShowScorer } from '../services/NoShowScorer.js';
-import { waitlistEngine } from '../services/WaitlistEngine.js';
+import { prisma } from '../lib/supabase.js';
 import { logger } from '../lib/logger.js';
 
 /**
@@ -50,7 +50,42 @@ export function startOutcomeRecordingJob(): void {
     logger.info('[OutcomeJob] Recording booking outcomes...');
 
     try {
-      logger.info('[OutcomeJob] Outcomes recorded successfully');
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date();
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Find classes that ended today
+      const endedClasses = await prisma.class.findMany({
+        where: {
+          endTime: {
+            gte: startOfDay,
+            lte: endOfDay
+          }
+        },
+        select: { id: true }
+      });
+
+      let recordedCount = 0;
+
+      for (const classItem of endedClasses) {
+        const bookings = await prisma.booking.findMany({
+          where: { classId: classItem.id }
+        });
+
+        for (const booking of bookings) {
+          if (['attended', 'no_show', 'cancelled'].includes(booking.status)) {
+            await noShowScorer.recordOutcome(
+              booking.id,
+              booking.status as 'attended' | 'no_show' | 'cancelled'
+            );
+            recordedCount++;
+          }
+        }
+      }
+
+      logger.info(`[OutcomeJob] Recorded outcomes for ${recordedCount} bookings`);
     } catch (error) {
       logger.error('[OutcomeJob] Error recording outcomes:', error);
     }

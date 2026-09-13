@@ -127,13 +127,13 @@ export class WhatsAppService {
   }
 
   /**
-   * Format phone number to E.164
+   * Format phone number to international E.164 format
    */
-  private formatPhoneNumber(phone: string): string {
+  public formatPhoneNumber(phone: string, defaultCountryCode: string = '27'): string {
     let cleaned = phone.replace(/\D/g, '');
     
     if (cleaned.startsWith('0')) {
-      cleaned = '27' + cleaned.substring(1);
+      cleaned = defaultCountryCode + cleaned.substring(1);
     }
     
     if (!cleaned.startsWith('+')) {
@@ -200,7 +200,6 @@ export async function createWhatsAppService(studioId: string): Promise<WhatsAppS
     logger.error(`Error loading WhatsApp settings for studio ${studioId}:`, error);
   }
 
-  // Fallback to environment variables
   const provider = (process.env.WABA_PROVIDER as '360dialog' | 'vonage') || '360dialog';
   const phoneNumberId = process.env.WABA_PHONE_NUMBER_ID || '';
   const accessToken = process.env.WABA_ACCESS_TOKEN || '';
