@@ -85,48 +85,53 @@ export default function Dashboard() {
     const today = new Date().toISOString().slice(0, 10)
     const d14 = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10)
 
-    // Fill events (30d)
-    const { data: fills } = await supabase.from('waitlist_fill_events')
-      .select('id, class_id, filled, created_at, class_name, revenue_amount')
-      .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
-      .order('created_at', { ascending: false })
-    const all = (fills as FillEvent[]) || []
-    const filled = all.filter(e => e.filled)
-    setSpotsFilled(filled.length)
-    setRevenue(filled.reduce((s, e) => s + (e.revenue_amount || 0), 0))
-    setFillRate(all.length ? Math.round((filled.length / all.length) * 100) : 0)
-    setEvents(all.slice(0, 8))
+    try {
+      // Fill events (30d)
+      const { data: fills } = await supabase.from('waitlist_fill_events')
+        .select('id, class_id, filled, created_at, class_name, revenue_amount')
+        .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
+        .order('created_at', { ascending: false })
+      const all = (fills as FillEvent[]) || []
+      const filled = all.filter(e => e.filled)
+      setSpotsFilled(filled.length)
+      setRevenue(filled.reduce((s, e) => s + (e.revenue_amount || 0), 0))
+      setFillRate(all.length ? Math.round((filled.length / all.length) * 100) : 0)
+      setEvents(all.slice(0, 8))
 
-    // At-risk members
-    const { count } = await supabase.from('member_churn_signals')
-      .select('id', { count: 'exact', head: true }).gte('churn_score', 65)
-    setAtRisk(count || 0)
+      // At-risk members
+      const { count } = await supabase.from('member_churn_signals')
+        .select('id', { count: 'exact', head: true }).gte('churn_score', 65)
+      setAtRisk(count || 0)
 
-    // Today's classes + risk
-    const { data: cls } = await supabase.from('classes')
-      .select('id, name, starts_at')
-      .gte('starts_at', `${today}T00:00:00`).lte('starts_at', `${today}T23:59:59`)
-      .order('starts_at')
-    if (cls?.length) {
-      const ids = cls.map(c => c.id)
-      const { data: risks } = await supabase.from('booking_risk_scores')
-        .select('class_id, risk_score').in('class_id', ids)
-      const map: Record<string, number> = {}
-      risks?.forEach(r => { if (map[r.class_id] === undefined || r.risk_score > map[r.class_id]) map[r.class_id] = r.risk_score })
-      setClasses(cls.map(c => ({ ...c, risk_score: map[c.id] ?? null })))
-    } else setClasses([])
+      // Today's classes + risk
+      const { data: cls } = await supabase.from('classes')
+        .select('id, name, starts_at')
+        .gte('starts_at', `${today}T00:00:00`).lte('starts_at', `${today}T23:59:59`)
+        .order('starts_at')
+      if (cls?.length) {
+        const ids = cls.map(c => c.id)
+        const { data: risks } = await supabase.from('booking_risk_scores')
+          .select('class_id, risk_score').in('class_id', ids)
+        const map: Record<string, number> = {}
+        risks?.forEach(r => { if (map[r.class_id] === undefined || r.risk_score > map[r.class_id]) map[r.class_id] = r.risk_score })
+        setClasses(cls.map(c => ({ ...c, risk_score: map[c.id] ?? null })))
+      } else setClasses([])
 
-    // 14-day chart
-    const { data: chartFills } = await supabase.from('waitlist_fill_events')
-      .select('created_at').eq('filled', true)
-      .gte('created_at', `${d14}T00:00:00`).lte('created_at', new Date().toISOString())
-    const buckets: Record<string, number> = {}
-    for (let i = 0; i < 14; i++) { buckets[new Date(Date.now() - (13 - i) * 86400000).toISOString().slice(0, 10)] = 0 }
-    chartFills?.forEach(r => { const d = r.created_at.slice(0, 10); if (buckets[d] !== undefined) buckets[d]++ })
-    setChart(Object.entries(buckets).map(([date, count]) => ({ date, count })))
+      // 14-day chart
+      const { data: chartFills } = await supabase.from('waitlist_fill_events')
+        .select('created_at').eq('filled', true)
+        .gte('created_at', `${d14}T00:00:00`).lte('created_at', new Date().toISOString())
+      const buckets: Record<string, number> = {}
+      for (let i = 0; i < 14; i++) { buckets[new Date(Date.now() - (13 - i) * 86400000).toISOString().slice(0, 10)] = 0 }
+      chartFills?.forEach(r => { const d = r.created_at.slice(0, 10); if (buckets[d] !== undefined) buckets[d]++ })
+      setChart(Object.entries(buckets).map(([date, count]) => ({ date, count })))
 
-    setLastUpdated(new Date())
-    setLoading(false)
+      setLastUpdated(new Date())
+    } catch (err) {
+      console.error('Failed to load dashboard data:', err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -202,8 +207,15 @@ export default function Dashboard() {
                 Updated {timeAgo(lastUpdated)}
               </span>
             )}
-            <button onClick={load} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, cursor: 'pointer', fontFamily: ff.sans }}>
-              <RefreshCw size={14} /> Refresh
+            <button
+              onClick={load}
+              disabled={loading}
+              aria-label="Refresh dashboard data"
+              className="hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-emerald-600 focus:outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: ff.sans }}
+            >
+              <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+              <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
             </button>
           </div>
         </div>
