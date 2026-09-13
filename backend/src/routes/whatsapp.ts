@@ -7,7 +7,7 @@ import { logger } from '../lib/logger.js';
 const router = Router();
 
 /**
- * Verify Meta / WhatsApp webhook signature
+ * Verify Meta / WhatsApp webhook signature using raw body buffer
  */
 function verifyWebhookSignature(req: any): boolean {
   const appSecret = process.env.WABA_APP_SECRET;
@@ -17,16 +17,17 @@ function verifyWebhookSignature(req: any): boolean {
       logger.error('WABA_APP_SECRET is not configured in production. Rejecting webhook.');
       return false;
     }
-    // Allow unverified webhooks only in development testing when secret is unset
     return true;
   }
 
   const signature = req.headers['x-hub-signature-256'] as string;
   if (!signature) return false;
 
+  const rawBodyBuffer = req.rawBody || Buffer.from(JSON.stringify(req.body));
+
   const expectedHex = crypto
     .createHmac('sha256', appSecret)
-    .update(JSON.stringify(req.body))
+    .update(rawBodyBuffer)
     .digest('hex');
 
   const expectedSignature = `sha256=${expectedHex}`;
@@ -58,12 +59,10 @@ router.post('/webhook', async (req: any, res: any) => {
 
     const payload: WABAWebhookPayload = req.body;
 
-    // Process each entry
     for (const entry of payload.entry || []) {
       for (const change of entry.changes || []) {
         const value = change.value;
 
-        // Process incoming messages
         if (value.messages) {
           for (const message of value.messages) {
             if (message.type === 'text' && message.text) {
@@ -72,7 +71,6 @@ router.post('/webhook', async (req: any, res: any) => {
 
               logger.info(`Received WhatsApp message from ${phone}: ${body}`);
 
-              // Process through waitlist engine
               const engine = new WaitlistEngine('default-studio');
               await engine.initialize();
               await engine.processReply(phone, body);
@@ -80,7 +78,6 @@ router.post('/webhook', async (req: any, res: any) => {
           }
         }
 
-        // Process status updates
         if (value.statuses) {
           for (const status of value.statuses) {
             logger.info(`Message ${status.id} status: ${status.status}`);

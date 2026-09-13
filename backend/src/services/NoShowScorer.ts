@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import { weatherFactorService } from './WeatherFactorService.js';
 import type { 
   BookingRiskFactors, 
   RiskScoreResult, 
@@ -10,31 +11,27 @@ const prisma = new PrismaClient();
 /**
  * NoShowScorer Service
  * 
- * Calculates no-show risk scores for bookings based on multiple factors.
- * Incorporates studio historical outcome accuracy feedback into scores.
+ * Calculates no-show risk scores for bookings incorporating weather/ambient factors and accuracy feedback.
  */
 export class NoShowScorer {
   private readonly AT_RISK_THRESHOLD = 60;
 
-  /**
-   * Calculate risk score for a single booking, adjusted by historical accuracy factor
-   */
-  calculateRisk(factors: BookingRiskFactors, accuracyAdjustment: number = 0): RiskScoreResult {
+  calculateRisk(
+    factors: BookingRiskFactors,
+    accuracyAdjustment: number = 0,
+    weatherAdjustment: number = 0
+  ): RiskScoreResult {
     let score = 0;
 
-    // Lead time: booked last-minute = higher risk
     if (factors.bookingLeadTime < 2) score += 25;
     else if (factors.bookingLeadTime < 6) score += 15;
     else if (factors.bookingLeadTime < 24) score += 8;
 
-    // Member no-show history (0–100% → 0–30 pts)
     score += Math.round(factors.memberNoShowHistory * 30);
 
-    // New member: < 5 lifetime bookings = higher risk
     if (factors.memberBookingCount < 5) score += 15;
     else if (factors.memberBookingCount < 10) score += 8;
 
-    // Membership type
     const membershipRisk: Record<MembershipType, number> = {
       'drop-in': 20,
       'class-pack': 10,
@@ -43,20 +40,16 @@ export class NoShowScorer {
     };
     score += membershipRisk[factors.membershipType] ?? 10;
 
-    // Recency: hasn't attended in 2+ weeks
     if (factors.daysSinceLastAttendance > 21) score += 12;
     else if (factors.daysSinceLastAttendance > 14) score += 7;
 
-    // Early morning class (before 7am) = higher risk
     if (factors.timeOfDay < 7) score += 8;
 
-    // No payment on file
     if (!factors.hasCompletedPayment) score += 10;
 
-    // Apply historical outcome feedback adjustment (+/- adjustment pts)
     score += accuracyAdjustment;
+    score += weatherAdjustment;
 
-    // Cap between 0 and 100
     const finalScore = Math.min(100, Math.max(0, score));
 
     return {
@@ -66,9 +59,6 @@ export class NoShowScorer {
     };
   }
 
-  /**
-   * Calculate dynamic score adjustment factor based on historical outcome accuracy
-   */
   async getStudioAccuracyAdjustment(memberId: string): Promise<number> {
     try {
       const recordedScores = await prisma.bookingRiskScore.findMany({
@@ -83,22 +73,17 @@ export class NoShowScorer {
 
       if (recordedScores.length === 0) return 0;
 
-      // If past high-risk flags resulted in actual no-shows, increase sensitivity (+5)
-      // If past high-risk flags actually attended, decrease false positive score (-5)
       const falsePositives = recordedScores.filter(s => s.atRisk && s.outcome === 'attended').length;
       const truePositives = recordedScores.filter(s => s.atRisk && s.outcome === 'no_show').length;
 
       if (truePositives > falsePositives) return 5;
       if (falsePositives > truePositives) return -5;
     } catch (err) {
-      // Fallback cleanly on error
+      // Fallback
     }
     return 0;
   }
 
-  /**
-   * Build risk factors for a booking by querying member history
-   */
   async buildRiskFactors(
     bookingId: string,
     classId: string,
@@ -197,6 +182,14 @@ export class NoShowScorer {
       }
     });
 
+    const classDetails = await prisma.class.findUnique({
+      where: { id: classId }
+    });
+
+    const weatherFactor = classDetails
+      ? await weatherFactorService.getWeatherFactor(classDetails.startTime)
+      : { riskAdjustmentPoints: 0 };
+
     const results: RiskScoreResult[] = [];
 
     for (const booking of bookings) {
@@ -208,7 +201,7 @@ export class NoShowScorer {
         );
 
         const accuracyAdjustment = await this.getStudioAccuracyAdjustment(booking.memberId);
-        const result = this.calculateRisk(factors, accuracyAdjustment);
+        const result = this.calculateRisk(factors, accuracyAdjustment, weatherFactor.riskAdjustmentPoints);
         results.push(result);
 
         await prisma.bookingRiskScore.create({

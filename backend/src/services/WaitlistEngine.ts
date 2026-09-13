@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { WhatsAppService, WHATSAPP_TEMPLATES, createWhatsAppService } from './WhatsAppService.js';
-import { noShowScorer } from './NoShowScorer.js';
+import { llmConversationService } from './LLMConversationService.js';
+import { realtimeService } from './RealtimeService.js';
 import type { 
   WaitlistMember, 
   ClaimResult,
@@ -10,14 +11,7 @@ import type {
 const prisma = new PrismaClient();
 
 /**
- * Waitlist Fill Engine
- * 
- * Automatically fills cancelled spots by:
- * 1. Detecting cancellation
- * 2. Scoring waitlist members for response likelihood
- * 3. Sending WhatsApp invites to top candidates
- * 4. Processing first reply and auto-booking
- * 5. Managing retry/expiry logic
+ * Waitlist Fill Engine with Conversational LLM Multi-Turn Integration
  */
 export class WaitlistEngine {
   private whatsapp: WhatsAppService | null = null;
@@ -28,9 +22,6 @@ export class WaitlistEngine {
     this.studioId = studioId;
   }
 
-  /**
-   * Initialize with studio settings
-   */
   async initialize(): Promise<void> {
     this.whatsapp = await createWhatsAppService(this.studioId);
     
@@ -43,9 +34,6 @@ export class WaitlistEngine {
     }
   }
 
-  /**
-   * Trigger waitlist fill process when a booking is cancelled
-   */
   async trigger(classId: string, cancelledBookingId: string): Promise<void> {
     if (!this.settings?.autoFillEnabled) {
       console.log(`Auto-fill disabled for studio ${this.studioId}`);
@@ -178,30 +166,23 @@ export class WaitlistEngine {
 
     if (!targetClass) return false;
 
-    // Check for confirmed bookings during the target class window (+/- 30 mins)
     const windowStart = new Date(targetClass.startTime.getTime() - 30 * 60 * 1000);
     const windowEnd = new Date(targetClass.endTime.getTime() + 30 * 60 * 1000);
 
-    const conflictingBookings = await prisma.booking.findMany({
+    const conflictingBookingsCount = await prisma.booking.count({
       where: {
         memberId,
-        status: 'confirmed'
-      }
+        status: 'confirmed',
+        bookingClass: {
+          startTime: {
+            gte: windowStart,
+            lte: windowEnd
+          }
+        }
+      } as any
     });
 
-    // Check if any of member's confirmed bookings fall into target class time window
-    for (const booking of conflictingBookings) {
-      const bookedClass = await prisma.class.findUnique({
-        where: { id: booking.classId },
-        select: { startTime: true }
-      });
-
-      if (bookedClass && bookedClass.startTime >= windowStart && bookedClass.startTime <= windowEnd) {
-        return true;
-      }
-    }
-
-    return false;
+    return conflictingBookingsCount > 0;
   }
 
   private async sendInvites(
@@ -281,13 +262,10 @@ export class WaitlistEngine {
     });
   }
 
+  /**
+   * Process inbound multi-turn reply from WhatsApp using LLMConversationService
+   */
   async processReply(phone: string, reply: string): Promise<void> {
-    const normalizedReply = reply.trim().toUpperCase();
-
-    if (normalizedReply !== 'YES' && normalizedReply !== 'BOOK') {
-      return;
-    }
-
     const pendingInvite = await prisma.pendingInvite.findFirst({
       where: {
         phone,
@@ -299,58 +277,108 @@ export class WaitlistEngine {
     });
 
     if (!pendingInvite) {
-      console.log(`No pending invite found for ${phone}`);
+      console.log(`No active pending invite found for ${phone}`);
       return;
     }
 
-    const result = await this.claimSpot(
-      pendingInvite.classId,
-      pendingInvite.memberId,
-      pendingInvite.id
+    const llmResult = await llmConversationService.processInboundMessage(
+      phone,
+      reply,
+      pendingInvite
     );
 
     if (!this.whatsapp) return;
 
-    const member = await prisma.member.findUnique({
-      where: { id: pendingInvite.memberId }
-    });
+    if (llmResult.actionTaken === 'claimed') {
+      const targetClassId = llmResult.targetClassId || pendingInvite.classId;
 
-    const classDetails = await prisma.class.findUnique({
-      where: { id: pendingInvite.classId }
-    });
+      const result = await this.claimSpot(
+        targetClassId,
+        pendingInvite.memberId,
+        pendingInvite.id
+      );
 
-    if (!member || !classDetails) return;
-
-    if (result.success) {
-      await this.whatsapp.sendMessage({
-        to: phone,
-        templateName: WHATSAPP_TEMPLATES.SPOT_CONFIRMED,
-        params: [
-          classDetails.name,
-          this.formatTime(classDetails.startTime)
-        ]
+      const member = await prisma.member.findUnique({
+        where: { id: pendingInvite.memberId }
       });
 
-      await this.markOtherInvitesTaken(pendingInvite.classId, pendingInvite.id);
+      const classDetails = await prisma.class.findUnique({
+        where: { id: targetClassId }
+      });
+
+      if (!member || !classDetails) return;
+
+      if (result.success) {
+        await this.whatsapp.sendMessage({
+          to: phone,
+          templateName: WHATSAPP_TEMPLATES.SPOT_CONFIRMED,
+          params: [
+            classDetails.name,
+            this.formatTime(classDetails.startTime)
+          ]
+        });
+
+        realtimeService.broadcastEvent({
+          type: 'spot_claimed',
+          studioId: this.studioId,
+          data: {
+            memberId: member.id,
+            memberName: `${member.firstName} ${member.lastName}`,
+            className: classDetails.name,
+            time: this.formatTime(classDetails.startTime)
+          },
+          timestamp: new Date().toISOString()
+        });
+
+        await this.markOtherInvitesTaken(targetClassId, pendingInvite.id);
+      } else {
+        await this.whatsapp.sendMessage({
+          to: phone,
+          templateName: WHATSAPP_TEMPLATES.SPOT_TAKEN,
+          params: [
+            member.firstName,
+            classDetails.name
+          ]
+        });
+      }
+
+      await prisma.pendingInvite.update({
+        where: { id: pendingInvite.id },
+        data: {
+          status: result.success ? 'responded' : 'taken',
+          respondedAt: new Date(),
+          response: reply
+        }
+      });
+    } else if (llmResult.actionTaken === 'alternative_suggested' && llmResult.targetClassId) {
+      // Update pending invite classId to alternative target class so next "YES" books the alternative
+      await prisma.pendingInvite.update({
+        where: { id: pendingInvite.id },
+        data: { classId: llmResult.targetClassId }
+      });
+
+      await this.whatsapp.sendMessage({
+        to: phone,
+        templateName: WHATSAPP_TEMPLATES.SPOT_AVAILABLE,
+        params: [
+          'Member',
+          'Studio',
+          llmResult.replyMessage,
+          'Next Available'
+        ]
+      });
     } else {
       await this.whatsapp.sendMessage({
         to: phone,
-        templateName: WHATSAPP_TEMPLATES.SPOT_TAKEN,
+        templateName: WHATSAPP_TEMPLATES.SPOT_AVAILABLE,
         params: [
-          member.firstName,
-          classDetails.name
+          'Member',
+          'Studio',
+          llmResult.replyMessage,
+          'Now'
         ]
       });
     }
-
-    await prisma.pendingInvite.update({
-      where: { id: pendingInvite.id },
-      data: {
-        status: result.success ? 'responded' : 'taken',
-        respondedAt: new Date(),
-        response: reply
-      }
-    });
   }
 
   async claimSpot(

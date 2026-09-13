@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { param, query, body } from 'express-validator';
 import { prisma } from '../lib/supabase.js';
 import { ChurnScorer } from '../services/ChurnScorer.js';
+import { retentionSurveyService } from '../services/RetentionSurveyService.js';
 import { createWhatsAppService, WHATSAPP_TEMPLATES } from '../services/WhatsAppService.js';
 import { optionalAuthMiddleware } from '../middleware/supabaseAuth.js';
 import { validateRequest } from '../middleware/validation.js';
@@ -10,6 +11,40 @@ import { logger } from '../lib/logger.js';
 const router = Router();
 
 router.use(optionalAuthMiddleware);
+
+/**
+ * POST /api/filliq/churn/survey/:memberId
+ * Dispatch 1-tap WhatsApp micro-survey to member
+ */
+router.post(
+  '/survey/:memberId',
+  [param('memberId').isString().trim().notEmpty().withMessage('memberId is required')],
+  validateRequest,
+  async (req: any, res: any) => {
+    try {
+      const { memberId } = req.params;
+      const success = await retentionSurveyService.dispatchMicroSurvey(memberId);
+
+      if (!success) {
+        return res.status(500).json({
+          success: false,
+          error: 'Failed to dispatch retention micro-survey'
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Retention micro-survey sent via WhatsApp'
+      });
+    } catch (error) {
+      logger.error('Error dispatching survey:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to dispatch survey'
+      });
+    }
+  }
+);
 
 /**
  * GET /api/filliq/churn/members
@@ -73,14 +108,12 @@ router.post(
         });
       }
 
-      // Get studio settings
       const settings = await prisma.fillIQSettings.findUnique({
         where: { studioId }
       });
 
       const studioName = settings?.studioWhatsAppNumber || 'the studio';
 
-      // Send WhatsApp nudge
       const whatsapp = await createWhatsAppService(studioId);
 
       if (!whatsapp) {
@@ -104,7 +137,6 @@ router.post(
         });
       }
 
-      // Update churn signal
       await prisma.memberChurnSignal.updateMany({
         where: {
           memberId,
@@ -157,7 +189,6 @@ router.post(
         });
       }
 
-      // Update churn signal
       await prisma.memberChurnSignal.updateMany({
         where: {
           memberId,

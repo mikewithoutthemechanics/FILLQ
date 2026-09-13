@@ -12,8 +12,18 @@ import churnRouter from './routes/churn.js';
 import dashboardRouter from './routes/dashboard.js';
 import settingsRouter from './routes/settings.js';
 import whatsappRouter from './routes/whatsapp.js';
+import integrationsRouter from './routes/integrations.js';
 import { apiLimiter, webhookLimiter } from './middleware/rateLimit.js';
 import { logger } from './lib/logger.js';
+
+// Extend Express Request to capture rawBody
+declare global {
+  namespace Express {
+    interface Request {
+      rawBody?: Buffer;
+    }
+  }
+}
 
 dotenv.config();
 
@@ -27,7 +37,12 @@ app.use(cors({
   credentials: true
 }));
 
-app.use(express.json());
+// Capture raw body buffer for accurate HMAC signature verification
+app.use(express.json({
+  verify: (req: any, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 app.use(express.urlencoded({ extended: true }));
 
 app.use((req, res, next) => {
@@ -37,6 +52,7 @@ app.use((req, res, next) => {
 
 // Apply rate limiters
 app.use('/api/filliq/whatsapp/webhook', webhookLimiter);
+app.use('/api/filliq/integrations/webhook', webhookLimiter);
 app.use('/api/filliq/', apiLimiter);
 
 // Health check and metrics endpoint
@@ -62,6 +78,7 @@ app.use('/api/filliq/churn', churnRouter);
 app.use('/api/filliq/dashboard', dashboardRouter);
 app.use('/api/filliq/settings', settingsRouter);
 app.use('/api/filliq/whatsapp', whatsappRouter);
+app.use('/api/filliq/integrations', integrationsRouter);
 
 app.get('/', (req, res) => {
   res.json({
@@ -75,7 +92,8 @@ app.get('/', (req, res) => {
       churn: '/api/filliq/churn',
       dashboard: '/api/filliq/dashboard',
       settings: '/api/filliq/settings',
-      whatsapp: '/api/filliq/whatsapp'
+      whatsapp: '/api/filliq/whatsapp',
+      integrations: '/api/filliq/integrations'
     }
   });
 });

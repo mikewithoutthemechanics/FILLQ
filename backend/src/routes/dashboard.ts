@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { param, query } from 'express-validator';
 import { DashboardService } from '../services/DashboardService.js';
+import { instructorBriefService } from '../services/InstructorBriefService.js';
 import { realtimeService } from '../services/RealtimeService.js';
 import { optionalAuthMiddleware } from '../middleware/supabaseAuth.js';
 import { validateRequest } from '../middleware/validation.js';
@@ -30,6 +31,40 @@ router.get('/stream', (req: any, res: any) => {
     realtimeService.removeClient(studioId, res);
   });
 });
+
+/**
+ * GET /api/filliq/dashboard/ai-instructor-brief/:classId
+ * Get generative AI instructor brief
+ */
+router.get(
+  '/ai-instructor-brief/:classId',
+  [param('classId').isString().trim().notEmpty().withMessage('classId is required')],
+  validateRequest,
+  async (req: any, res: any) => {
+    try {
+      const { classId } = req.params;
+      const brief = await instructorBriefService.generateBrief(classId);
+
+      if (!brief) {
+        return res.status(404).json({
+          success: false,
+          error: 'Class not found'
+        });
+      }
+
+      res.json({
+        success: true,
+        data: brief
+      });
+    } catch (error) {
+      logger.error('Error generating AI instructor brief:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Failed to generate AI instructor brief'
+      });
+    }
+  }
+);
 
 /**
  * GET /api/filliq/dashboard/summary
