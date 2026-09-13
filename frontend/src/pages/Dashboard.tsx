@@ -77,20 +77,24 @@ export default function Dashboard() {
   const [classes, setClasses] = useState<ClassWithRisk[]>([])
   const [chart, setChart] = useState<{ date: string; count: number }[]>([])
   const [loading, setLoading] = useState(true)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
   const [tick, setTick] = useState(0)
 
   async function load() {
     setLoading(true)
+    setErrorMsg(null)
     const today = new Date().toISOString().slice(0, 10)
     const d14 = new Date(Date.now() - 13 * 86400000).toISOString().slice(0, 10)
 
     try {
       // Fill events (30d)
-      const { data: fills } = await supabase.from('waitlist_fill_events')
+      const { data: fills, error: fillsError } = await supabase.from('waitlist_fill_events')
         .select('id, class_id, filled, created_at, class_name, revenue_amount')
         .gte('created_at', new Date(Date.now() - 30 * 86400000).toISOString())
         .order('created_at', { ascending: false })
+      if (fillsError) throw fillsError
+
       const all = (fills as FillEvent[]) || []
       const filled = all.filter(e => e.filled)
       setSpotsFilled(filled.length)
@@ -99,15 +103,18 @@ export default function Dashboard() {
       setEvents(all.slice(0, 8))
 
       // At-risk members
-      const { count } = await supabase.from('member_churn_signals')
+      const { count, error: countError } = await supabase.from('member_churn_signals')
         .select('id', { count: 'exact', head: true }).gte('churn_score', 65)
+      if (countError) throw countError
       setAtRisk(count || 0)
 
       // Today's classes + risk
-      const { data: cls } = await supabase.from('classes')
+      const { data: cls, error: clsError } = await supabase.from('classes')
         .select('id, name, starts_at')
         .gte('starts_at', `${today}T00:00:00`).lte('starts_at', `${today}T23:59:59`)
         .order('starts_at')
+      if (clsError) throw clsError
+
       if (cls?.length) {
         const ids = cls.map(c => c.id)
         const { data: risks } = await supabase.from('booking_risk_scores')
@@ -118,17 +125,20 @@ export default function Dashboard() {
       } else setClasses([])
 
       // 14-day chart
-      const { data: chartFills } = await supabase.from('waitlist_fill_events')
+      const { data: chartFills, error: chartError } = await supabase.from('waitlist_fill_events')
         .select('created_at').eq('filled', true)
         .gte('created_at', `${d14}T00:00:00`).lte('created_at', new Date().toISOString())
+      if (chartError) throw chartError
+
       const buckets: Record<string, number> = {}
       for (let i = 0; i < 14; i++) { buckets[new Date(Date.now() - (13 - i) * 86400000).toISOString().slice(0, 10)] = 0 }
       chartFills?.forEach(r => { const d = r.created_at.slice(0, 10); if (buckets[d] !== undefined) buckets[d]++ })
       setChart(Object.entries(buckets).map(([date, count]) => ({ date, count })))
 
       setLastUpdated(new Date())
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to load dashboard data:', err)
+      setErrorMsg('Failed to refresh data. Please check connection.')
     } finally {
       setLoading(false)
     }
@@ -202,7 +212,12 @@ export default function Dashboard() {
             <p style={{ fontSize: 14, color: C.t5, margin: '4px 0 0' }}>Revenue recovery &amp; no-show prevention</p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {lastUpdated && (
+            {errorMsg && (
+              <span style={{ fontSize: 12, color: C.rM, fontFamily: ff.sans, fontWeight: 500 }}>
+                {errorMsg}
+              </span>
+            )}
+            {lastUpdated && !errorMsg && (
               <span style={{ fontSize: 12, color: C.t4, fontFamily: ff.sans }}>
                 Updated {timeAgo(lastUpdated)}
               </span>
@@ -210,9 +225,9 @@ export default function Dashboard() {
             <button
               onClick={load}
               disabled={loading}
-              aria-label="Refresh dashboard data"
-              className="hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-emerald-600 focus:outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, cursor: loading ? 'not-allowed' : 'pointer', fontFamily: ff.sans }}
+              aria-label={loading ? 'Refreshing dashboard data' : 'Refresh dashboard data'}
+              className="hover:bg-gray-50 focus-visible:ring-2 focus-visible:ring-offset-1 focus:outline-none transition-all disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 16px', background: '#fff', border: `1px solid ${C.bd}`, borderRadius: 8, fontSize: 13, color: C.t9, fontFamily: ff.sans, outlineColor: C.gM }}
             >
               <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
               <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
