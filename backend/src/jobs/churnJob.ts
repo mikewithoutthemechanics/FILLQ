@@ -14,7 +14,6 @@ export function startChurnJob(): void {
     logger.info('[ChurnJob] Running churn scoring across studios...');
 
     try {
-      // Query distinct studio IDs from filliq_settings
       const settings = await prisma.fillIQSettings.findMany({
         select: { studioId: true }
       });
@@ -64,7 +63,16 @@ async function sendAutoNudges(studioId: string): Promise<void> {
       where: {
         churnScore: { gte: 80 },
         actionTaken: null,
-        signalDate: { gte: startOfDay }
+        signalDate: { gte: startOfDay },
+        churnMember: {
+          // Isolate critical churn signals strictly by member studioId
+          // Or match default-studio if not explicitly specified
+          memberRiskScores: {
+            some: {
+              bookingClass: { studioId }
+            }
+          }
+        }
       },
       include: {
         churnMember: true
@@ -89,7 +97,7 @@ async function sendAutoNudges(studioId: string): Promise<void> {
           }
         });
 
-        logger.info(`[ChurnJob] Auto-nudge sent to ${member.firstName} ${member.lastName}`);
+        logger.info(`[ChurnJob] Auto-nudge sent to ${member.firstName} ${member.lastName} for studio ${studioId}`);
       } catch (error) {
         logger.error(`[ChurnJob] Error sending nudge to ${signal.memberId}:`, error);
       }

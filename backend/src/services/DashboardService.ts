@@ -5,7 +5,7 @@ import type {
   TeacherClassBrief,
   AtRiskMember 
 } from '../types/index.js';
-import { churnScorer } from './ChurnScorer.js';
+import { ChurnScorer } from './ChurnScorer.js';
 import { noShowScorer } from './NoShowScorer.js';
 
 const prisma = new PrismaClient();
@@ -33,7 +33,6 @@ export class DashboardService {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Get fill events for this month
     const fillEvents = await prisma.waitlistFillEvent.findMany({
       where: {
         triggeredAt: {
@@ -43,7 +42,6 @@ export class DashboardService {
       }
     });
 
-    // Calculate metrics
     const revenueRecovered = fillEvents.reduce(
       (sum: number, e: any) => sum + Number(e.revenueRecovered || 0),
       0
@@ -51,7 +49,6 @@ export class DashboardService {
 
     const spotsFilled = fillEvents.length;
 
-    // Calculate average fill time
     const fillTimes = fillEvents
       .map((e: any) => e.fillTimeSeconds)
       .filter((t: any): t is number => t !== null && t !== undefined);
@@ -62,10 +59,10 @@ export class DashboardService {
     
     const avgFillTimeMinutes = Math.round(avgFillTimeSeconds / 60);
 
-    // Get churn prevention metrics
+    const churnScorer = new ChurnScorer(this.studioId);
+    await churnScorer.initialize();
     const churnMetrics = await churnScorer.getChurnSummary();
 
-    // Calculate fill rate (filled spots / total cancellations)
     const totalCancellations = await prisma.waitlistFillEvent.count({
       where: {
         triggeredAt: {
@@ -102,7 +99,6 @@ export class DashboardService {
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
 
-      // Get fill events for this day
       const fillEvents = await prisma.waitlistFillEvent.findMany({
         where: {
           triggeredAt: {
@@ -132,6 +128,8 @@ export class DashboardService {
    * Get at-risk members for churn panel
    */
   async getAtRiskMembers(): Promise<AtRiskMember[]> {
+    const churnScorer = new ChurnScorer(this.studioId);
+    await churnScorer.initialize();
     const members = await churnScorer.getAtRiskMembers(50);
 
     return members.map((m: any) => ({

@@ -13,9 +13,6 @@ interface WhatsAppConfig {
 
 /**
  * WhatsApp Business API Service
- * 
- * Handles sending templated messages and receiving webhook callbacks
- * Supports 360dialog and Vonage providers
  */
 export class WhatsAppService {
   private config: WhatsAppConfig;
@@ -24,9 +21,6 @@ export class WhatsAppService {
     this.config = config;
   }
 
-  /**
-   * Send a templated WhatsApp message
-   */
   async sendMessage(message: WhatsAppMessage): Promise<{ success: boolean; messageId?: string; error?: string }> {
     try {
       let response;
@@ -50,9 +44,6 @@ export class WhatsAppService {
     }
   }
 
-  /**
-   * Send via 360dialog API
-   */
   private async send360Dialog(message: WhatsAppMessage) {
     const url = `https://waba.360dialog.io/v1/messages`;
     
@@ -88,9 +79,6 @@ export class WhatsAppService {
     );
   }
 
-  /**
-   * Send via Vonage API
-   */
   private async sendVonage(message: WhatsAppMessage) {
     const url = `https://messages-sandbox.nexmo.com/v1/messages`;
     
@@ -126,9 +114,6 @@ export class WhatsAppService {
     );
   }
 
-  /**
-   * Format phone number to international E.164 format
-   */
   public formatPhoneNumber(phone: string, defaultCountryCode: string = '27'): string {
     let cleaned = phone.replace(/\D/g, '');
     
@@ -143,9 +128,6 @@ export class WhatsAppService {
     return cleaned;
   }
 
-  /**
-   * Parse webhook payload and extract replies
-   */
   parseWebhook(payload: WABAWebhookPayload): InboundReply[] {
     const replies: InboundReply[] = [];
 
@@ -174,9 +156,6 @@ export class WhatsAppService {
   }
 }
 
-/**
- * Factory to create WhatsApp service with studio settings
- */
 export async function createWhatsAppService(studioId: string): Promise<WhatsAppService | null> {
   try {
     const settings = await prisma.fillIQSettings.findUnique({
@@ -221,5 +200,7 @@ export const WHATSAPP_TEMPLATES = {
   SPOT_CONFIRMED: 'filiq_spot_confirmed',
   SPOT_TAKEN: 'filiq_spot_taken',
   REBOOK_NUDGE: 'filiq_rebook_nudge',
-  CHURN_NUDGE: 'filiq_churn_nudge'
+  CHURN_NUDGE: 'filiq_churn_nudge',
+  AI_CHAT_REPLY: 'filiq_ai_chat_reply',
+  RETENTION_SURVEY: 'filiq_retention_survey'
 } as const;
