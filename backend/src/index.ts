@@ -12,39 +12,46 @@ import churnRouter from './routes/churn.js';
 import dashboardRouter from './routes/dashboard.js';
 import settingsRouter from './routes/settings.js';
 import whatsappRouter from './routes/whatsapp.js';
-import { supabaseAuthMiddleware, optionalAuthMiddleware } from './middleware/supabaseAuth.js';
+import { apiLimiter, webhookLimiter } from './middleware/rateLimit.js';
+import { logger } from './lib/logger.js';
 
-// Load environment variables
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Security middleware
 app.use(helmet());
 
-// CORS configuration
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
   credentials: true
 }));
 
-// Body parsing
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Request logging middleware
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
+  logger.info(`${req.method} ${req.path}`);
   next();
 });
 
-// Health check endpoint
+// Apply rate limiters
+app.use('/api/filliq/whatsapp/webhook', webhookLimiter);
+app.use('/api/filliq/', apiLimiter);
+
+// Health check and metrics endpoint
 app.get('/health', (req, res) => {
+  const memoryUsage = process.memoryUsage();
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: '1.0.0'
+    version: '1.0.0',
+    uptimeSeconds: Math.floor(process.uptime()),
+    memory: {
+      rssMb: Math.round(memoryUsage.rss / 1024 / 1024),
+      heapTotalMb: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+      heapUsedMb: Math.round(memoryUsage.heapUsed / 1024 / 1024)
+    }
   });
 });
 
@@ -56,7 +63,6 @@ app.use('/api/filliq/dashboard', dashboardRouter);
 app.use('/api/filliq/settings', settingsRouter);
 app.use('/api/filliq/whatsapp', whatsappRouter);
 
-// Root endpoint
 app.get('/', (req, res) => {
   res.json({
     name: 'FillIQ API',
@@ -74,7 +80,6 @@ app.get('/', (req, res) => {
   });
 });
 
-// 404 handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -82,33 +87,19 @@ app.use((req, res) => {
   });
 });
 
-// Error handler
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Unhandled error:', err);
+  logger.error('Unhandled error:', err);
   res.status(500).json({
     success: false,
     error: 'Internal server error'
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
-╔════════════════════════════════════════════════════════════╗
-║                                                            ║
-║   FillIQ API Server                                        ║
-║   AI-Powered No-Show Optimizer                             ║
-║                                                            ║
-║   Running on port ${PORT.toString().padEnd(40)}║
-║   Environment: ${(process.env.NODE_ENV || 'development').padEnd(43)}║
-║                                                            ║
-╚════════════════════════════════════════════════════════════╝
-  `);
-
-  // Start scheduled jobs
-  if (process.env.NODE_ENV !== 'test') {
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info(`FillIQ API Server running on port ${PORT}`);
     startAllJobs();
-  }
-});
+  });
+}
 
 export default app;

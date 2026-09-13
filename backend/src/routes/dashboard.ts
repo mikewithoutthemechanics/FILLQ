@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { param, query } from 'express-validator';
 import { DashboardService } from '../services/DashboardService.js';
+import { realtimeService } from '../services/RealtimeService.js';
 import { optionalAuthMiddleware } from '../middleware/supabaseAuth.js';
 import { validateRequest } from '../middleware/validation.js';
 import { logger } from '../lib/logger.js';
@@ -8,6 +9,27 @@ import { logger } from '../lib/logger.js';
 const router = Router();
 
 router.use(optionalAuthMiddleware);
+
+/**
+ * GET /api/filliq/dashboard/stream
+ * SSE (Server-Sent Events) endpoint for real-time dashboard updates
+ */
+router.get('/stream', (req: any, res: any) => {
+  const studioId = (req.query.studioId as string) || req.user?.studioId || 'default-studio';
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.flushHeaders();
+
+  res.write(`data: ${JSON.stringify({ type: 'connected', studioId, timestamp: new Date().toISOString() })}\n\n`);
+
+  realtimeService.addClient(studioId, res);
+
+  req.on('close', () => {
+    realtimeService.removeClient(studioId, res);
+  });
+});
 
 /**
  * GET /api/filliq/dashboard/summary

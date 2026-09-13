@@ -11,15 +11,15 @@ const prisma = new PrismaClient();
  * NoShowScorer Service
  * 
  * Calculates no-show risk scores for bookings based on multiple factors.
- * Runs as a scheduled job 3 hours before each class.
+ * Incorporates studio historical outcome accuracy feedback into scores.
  */
 export class NoShowScorer {
   private readonly AT_RISK_THRESHOLD = 60;
 
   /**
-   * Calculate risk score for a single booking
+   * Calculate risk score for a single booking, adjusted by historical accuracy factor
    */
-  calculateRisk(factors: BookingRiskFactors): RiskScoreResult {
+  calculateRisk(factors: BookingRiskFactors, accuracyAdjustment: number = 0): RiskScoreResult {
     let score = 0;
 
     // Lead time: booked last-minute = higher risk
@@ -53,14 +53,47 @@ export class NoShowScorer {
     // No payment on file
     if (!factors.hasCompletedPayment) score += 10;
 
-    // Cap at 100
-    const finalScore = Math.min(100, score);
+    // Apply historical outcome feedback adjustment (+/- adjustment pts)
+    score += accuracyAdjustment;
+
+    // Cap between 0 and 100
+    const finalScore = Math.min(100, Math.max(0, score));
 
     return {
       score: finalScore,
       factors,
       atRisk: finalScore >= this.AT_RISK_THRESHOLD
     };
+  }
+
+  /**
+   * Calculate dynamic score adjustment factor based on historical outcome accuracy
+   */
+  async getStudioAccuracyAdjustment(memberId: string): Promise<number> {
+    try {
+      const recordedScores = await prisma.bookingRiskScore.findMany({
+        where: {
+          memberId,
+          outcomeRecordedAt: { not: null },
+          outcome: { in: ['no_show', 'attended'] }
+        },
+        take: 20,
+        orderBy: { scoredAt: 'desc' }
+      });
+
+      if (recordedScores.length === 0) return 0;
+
+      // If past high-risk flags resulted in actual no-shows, increase sensitivity (+5)
+      // If past high-risk flags actually attended, decrease false positive score (-5)
+      const falsePositives = recordedScores.filter(s => s.atRisk && s.outcome === 'attended').length;
+      const truePositives = recordedScores.filter(s => s.atRisk && s.outcome === 'no_show').length;
+
+      if (truePositives > falsePositives) return 5;
+      if (falsePositives > truePositives) return -5;
+    } catch (err) {
+      // Fallback cleanly on error
+    }
+    return 0;
   }
 
   /**
@@ -174,7 +207,8 @@ export class NoShowScorer {
           booking.memberId
         );
 
-        const result = this.calculateRisk(factors);
+        const accuracyAdjustment = await this.getStudioAccuracyAdjustment(booking.memberId);
+        const result = this.calculateRisk(factors, accuracyAdjustment);
         results.push(result);
 
         await prisma.bookingRiskScore.create({
