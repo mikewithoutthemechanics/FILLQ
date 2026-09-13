@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { prisma } from '../lib/supabase.js';
+import { decryptText } from '../lib/crypto.js';
+import { logger } from '../lib/logger.js';
 import type { WhatsAppMessage, WABAWebhookPayload, InboundReply } from '../types/index.js';
 
 interface WhatsAppConfig {
@@ -39,7 +42,7 @@ export class WhatsAppService {
         messageId: response.data?.messages?.[0]?.id
       };
     } catch (error) {
-      console.error('WhatsApp send error:', error);
+      logger.error('WhatsApp send error:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -68,7 +71,7 @@ export class WhatsAppService {
           components: [
             {
               type: 'body',
-              parameters: message.params.map((param, index) => ({
+              parameters: message.params.map(param => ({
                 type: 'text',
                 text: param
               }))
@@ -124,16 +127,13 @@ export class WhatsAppService {
   }
 
   /**
-   * Format phone number to E.164
+   * Format phone number to international E.164 format
    */
-  private formatPhoneNumber(phone: string): string {
-    // Remove any non-digit characters
+  public formatPhoneNumber(phone: string, defaultCountryCode: string = '27'): string {
     let cleaned = phone.replace(/\D/g, '');
     
-    // Ensure it starts with country code
     if (cleaned.startsWith('0')) {
-      // South Africa number starting with 0
-      cleaned = '27' + cleaned.substring(1);
+      cleaned = defaultCountryCode + cleaned.substring(1);
     }
     
     if (!cleaned.startsWith('+')) {
@@ -172,30 +172,40 @@ export class WhatsAppService {
 
     return replies;
   }
-
-  /**
-   * Verify webhook signature (security)
-   */
-  verifyWebhookSignature(payload: string, signature: string, appSecret: string): boolean {
-    // Implementation depends on provider
-    // 360dialog and Vonage have different signature methods
-    // This is a simplified placeholder
-    return true; // Implement actual verification based on provider docs
-  }
 }
 
 /**
  * Factory to create WhatsApp service with studio settings
  */
 export async function createWhatsAppService(studioId: string): Promise<WhatsAppService | null> {
-  // In production, fetch from database with decrypted token
-  // For now, return from environment variables
-  const provider = process.env.WABA_PROVIDER as '360dialog' | 'vonage' || '360dialog';
+  try {
+    const settings = await prisma.fillIQSettings.findUnique({
+      where: { studioId }
+    });
+
+    if (settings && settings.wabaPhoneNumberId) {
+      const accessToken = settings.wabaAccessTokenEncrypted
+        ? decryptText(settings.wabaAccessTokenEncrypted)
+        : process.env.WABA_ACCESS_TOKEN || '';
+
+      if (accessToken) {
+        return new WhatsAppService({
+          provider: (settings.wabaProvider as '360dialog' | 'vonage') || '360dialog',
+          phoneNumberId: settings.wabaPhoneNumberId,
+          accessToken
+        });
+      }
+    }
+  } catch (error) {
+    logger.error(`Error loading WhatsApp settings for studio ${studioId}:`, error);
+  }
+
+  const provider = (process.env.WABA_PROVIDER as '360dialog' | 'vonage') || '360dialog';
   const phoneNumberId = process.env.WABA_PHONE_NUMBER_ID || '';
   const accessToken = process.env.WABA_ACCESS_TOKEN || '';
 
   if (!accessToken || !phoneNumberId) {
-    console.warn('WhatsApp not configured');
+    logger.warn(`WhatsApp not configured for studio ${studioId}`);
     return null;
   }
 
@@ -206,7 +216,6 @@ export async function createWhatsAppService(studioId: string): Promise<WhatsAppS
   });
 }
 
-// Template definitions for FillIQ
 export const WHATSAPP_TEMPLATES = {
   SPOT_AVAILABLE: 'filiq_spot_available',
   SPOT_CONFIRMED: 'filiq_spot_confirmed',

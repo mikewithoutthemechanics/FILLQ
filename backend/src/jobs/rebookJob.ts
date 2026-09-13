@@ -1,8 +1,7 @@
 import cron from 'node-cron';
 import { WaitlistEngine } from '../services/WaitlistEngine.js';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/supabase.js';
+import { logger } from '../lib/logger.js';
 
 /**
  * Rebook Nudge Job
@@ -11,16 +10,14 @@ const prisma = new PrismaClient();
  * and send rebook nudges to attendees
  */
 export function startRebookJob(): void {
-  // Run every 30 minutes
   cron.schedule('*/30 * * * *', async () => {
-    console.log('[RebookJob] Checking for rebook nudges...');
+    logger.info('[RebookJob] Checking for rebook nudges...');
 
     try {
       const now = new Date();
       const fortyFiveMinutesAgo = new Date(now.getTime() - 45 * 60 * 1000);
       const fiftyMinutesAgo = new Date(now.getTime() - 50 * 60 * 1000);
 
-      // Find classes that ended 45-50 minutes ago
       const recentlyEndedClasses = await prisma.class.findMany({
         where: {
           endTime: {
@@ -31,7 +28,7 @@ export function startRebookJob(): void {
         }
       });
 
-      console.log(`[RebookJob] Found ${recentlyEndedClasses.length} recently ended classes`);
+      logger.info(`[RebookJob] Found ${recentlyEndedClasses.length} recently ended classes`);
 
       for (const classItem of recentlyEndedClasses) {
         try {
@@ -39,15 +36,15 @@ export function startRebookJob(): void {
           await engine.initialize();
           await engine.sendRebookNudges(classItem.id);
           
-          console.log(`[RebookJob] Rebook nudges sent for class ${classItem.id}`);
+          logger.info(`[RebookJob] Rebook nudges sent for class ${classItem.id}`);
         } catch (error) {
-          console.error(`[RebookJob] Error sending rebook nudges for class ${classItem.id}:`, error);
+          logger.error(`[RebookJob] Error sending rebook nudges for class ${classItem.id}:`, error);
         }
       }
     } catch (error) {
-      console.error('[RebookJob] Error in rebook job:', error);
+      logger.error('[RebookJob] Error in rebook job:', error);
     }
   });
 
-  console.log('[RebookJob] Rebook nudge job scheduled (every 30 minutes)');
+  logger.info('[RebookJob] Rebook nudge job scheduled (every 30 minutes)');
 }

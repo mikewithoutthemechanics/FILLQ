@@ -100,8 +100,8 @@ export interface InboundReply {
 // ============================================
 
 export interface RecoverySummary {
-  revenueRecoveredThisMonth: number;
-  spotsFilledThisMonth: number;
+  revenueRecovered: number;
+  spotsFilled: number;
   avgFillTimeMinutes: number;
   churnsPreventedThisMonth: number;
   fillRatePercentage: number;

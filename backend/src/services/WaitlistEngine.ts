@@ -34,7 +34,6 @@ export class WaitlistEngine {
   async initialize(): Promise<void> {
     this.whatsapp = await createWhatsAppService(this.studioId);
     
-    // Load settings from DB
     const dbSettings = await prisma.fillIQSettings.findUnique({
       where: { studioId: this.studioId }
     });
@@ -53,7 +52,6 @@ export class WaitlistEngine {
       return;
     }
 
-    // Create fill event
     const fillEvent = await prisma.waitlistFillEvent.create({
       data: {
         classId,
@@ -62,7 +60,6 @@ export class WaitlistEngine {
       }
     });
 
-    // Get available spot count
     const classDetails = await prisma.class.findUnique({
       where: { id: classId }
     });
@@ -73,7 +70,6 @@ export class WaitlistEngine {
       return;
     }
 
-    // Get and score waitlist
     const waitlist = await this.getScoredWaitlist(classId);
 
     if (waitlist.length === 0) {
@@ -82,7 +78,6 @@ export class WaitlistEngine {
       return;
     }
 
-    // Send invites to top N candidates
     const inviteCount = Math.min(
       this.settings.maxSimultaneousInvites,
       waitlist.length
@@ -92,12 +87,10 @@ export class WaitlistEngine {
     
     await this.sendInvites(topCandidates, classId, fillEvent.id);
 
-    // Update fill event
     await this.updateFillEvent(fillEvent.id, {
       invitesSent: inviteCount
     });
 
-    // Schedule expansion if needed
     if (this.settings.autoExpandAfterMinutes > 0) {
       setTimeout(
         () => this.expandInvites(classId, fillEvent.id, waitlist.slice(inviteCount)),
@@ -106,9 +99,6 @@ export class WaitlistEngine {
     }
   }
 
-  /**
-   * Get waitlist members scored by response likelihood
-   */
   private async getScoredWaitlist(classId: string): Promise<WaitlistMember[]> {
     const entries = await prisma.waitlistEntry.findMany({
       where: {
@@ -117,14 +107,9 @@ export class WaitlistEngine {
       },
       orderBy: {
         position: 'asc'
-      },
-      include: {
-        // Join with member to get phone and name
-        // Note: In real implementation, this would use a proper relation
       }
     });
 
-    // Score each member
     const scoredMembers: WaitlistMember[] = [];
 
     for (const entry of entries) {
@@ -134,7 +119,6 @@ export class WaitlistEngine {
 
       if (!member) continue;
 
-      // Skip if member already has booking at same time
       const hasConflictingBooking = await this.hasConflictingBooking(
         entry.memberId,
         classId
@@ -142,7 +126,6 @@ export class WaitlistEngine {
 
       if (hasConflictingBooking) continue;
 
-      // Score based on position, past response rate, membership type
       const responseLikelihood = await this.scoreResponseLikelihood(entry.memberId);
 
       scoredMembers.push({
@@ -154,17 +137,12 @@ export class WaitlistEngine {
       });
     }
 
-    // Sort by response likelihood (highest first)
     return scoredMembers.sort((a, b) => b.responseLikelihood - a.responseLikelihood);
   }
 
-  /**
-   * Score a member's likelihood to respond quickly
-   */
   private async scoreResponseLikelihood(memberId: string): Promise<number> {
-    let score = 50; // Base score
+    let score = 50;
 
-    // Check past fill event response rate
     const pastFills = await prisma.waitlistFillEvent.findMany({
       where: {
         filledByMemberId: memberId
@@ -172,21 +150,17 @@ export class WaitlistEngine {
     });
 
     if (pastFills.length > 0) {
-      // Past success increases score
       score += Math.min(20, pastFills.length * 5);
     }
 
-    // Check member engagement level
     const member = await prisma.member.findUnique({
       where: { id: memberId }
     });
 
     if (member) {
-      // Monthly/annual members more likely to respond
       if (member.membershipType === 'monthly') score += 10;
       if (member.membershipType === 'annual') score += 15;
       
-      // New members very responsive
       const bookingCount = await prisma.booking.count({
         where: { memberId }
       });
@@ -197,9 +171,6 @@ export class WaitlistEngine {
     return Math.min(100, score);
   }
 
-  /**
-   * Check if member has a booking at the same time
-   */
   private async hasConflictingBooking(memberId: string, classId: string): Promise<boolean> {
     const targetClass = await prisma.class.findUnique({
       where: { id: classId }
@@ -207,28 +178,32 @@ export class WaitlistEngine {
 
     if (!targetClass) return false;
 
+    // Check for confirmed bookings during the target class window (+/- 30 mins)
+    const windowStart = new Date(targetClass.startTime.getTime() - 30 * 60 * 1000);
+    const windowEnd = new Date(targetClass.endTime.getTime() + 30 * 60 * 1000);
+
     const conflictingBookings = await prisma.booking.findMany({
       where: {
         memberId,
-        status: 'confirmed',
-        class: {
-          startTime: {
-            gte: new Date(targetClass.startTime.getTime() - 30 * 60 * 1000), // 30 min before
-            lte: new Date(targetClass.endTime.getTime() + 30 * 60 * 1000)    // 30 min after
-          }
-        }
-      },
-      include: {
-        class: true
+        status: 'confirmed'
       }
     });
 
-    return conflictingBookings.length > 0;
+    // Check if any of member's confirmed bookings fall into target class time window
+    for (const booking of conflictingBookings) {
+      const bookedClass = await prisma.class.findUnique({
+        where: { id: booking.classId },
+        select: { startTime: true }
+      });
+
+      if (bookedClass && bookedClass.startTime >= windowStart && bookedClass.startTime <= windowEnd) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
-  /**
-   * Send WhatsApp invites to candidates
-   */
   private async sendInvites(
     candidates: WaitlistMember[],
     classId: string,
@@ -248,7 +223,6 @@ export class WaitlistEngine {
     const teacher = await this.getTeacherName(classDetails.teacherId);
 
     for (const candidate of candidates) {
-      // Create pending invite record
       await prisma.pendingInvite.create({
         data: {
           classId,
@@ -259,13 +233,12 @@ export class WaitlistEngine {
         }
       });
 
-      // Send WhatsApp
       const message = {
         to: candidate.phone,
         templateName: WHATSAPP_TEMPLATES.SPOT_AVAILABLE,
         params: [
           candidate.firstName,
-          teacher, // Person who cancelled (we'd need to track this)
+          teacher,
           classDetails.name,
           this.formatTime(classDetails.startTime)
         ]
@@ -279,27 +252,21 @@ export class WaitlistEngine {
     }
   }
 
-  /**
-   * Expand invites to next batch if first batch didn't fill
-   */
   private async expandInvites(
     classId: string,
     fillEventId: string,
     remainingCandidates: WaitlistMember[]
   ): Promise<void> {
-    // Check if already filled
     const fillEvent = await prisma.waitlistFillEvent.findUnique({
       where: { id: fillEventId }
     });
 
     if (!fillEvent || fillEvent.filled) return;
 
-    // Send to next batch
     const batchSize = this.settings?.maxSimultaneousInvites || 3;
     const nextBatch = remainingCandidates.slice(0, batchSize);
 
     if (nextBatch.length === 0) {
-      // No more candidates, mark as expired
       await this.updateFillEvent(fillEventId, { 
         status: 'expired',
         completedAt: new Date()
@@ -314,17 +281,13 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Process inbound reply from WhatsApp
-   */
   async processReply(phone: string, reply: string): Promise<void> {
     const normalizedReply = reply.trim().toUpperCase();
 
     if (normalizedReply !== 'YES' && normalizedReply !== 'BOOK') {
-      return; // Not a claim attempt
+      return;
     }
 
-    // Find active pending invite
     const pendingInvite = await prisma.pendingInvite.findFirst({
       where: {
         phone,
@@ -340,14 +303,12 @@ export class WaitlistEngine {
       return;
     }
 
-    // Attempt claim
     const result = await this.claimSpot(
       pendingInvite.classId,
       pendingInvite.memberId,
       pendingInvite.id
     );
 
-    // Send response
     if (!this.whatsapp) return;
 
     const member = await prisma.member.findUnique({
@@ -361,7 +322,6 @@ export class WaitlistEngine {
     if (!member || !classDetails) return;
 
     if (result.success) {
-      // Send confirmation
       await this.whatsapp.sendMessage({
         to: phone,
         templateName: WHATSAPP_TEMPLATES.SPOT_CONFIRMED,
@@ -371,10 +331,8 @@ export class WaitlistEngine {
         ]
       });
 
-      // Mark other invites as taken
       await this.markOtherInvitesTaken(pendingInvite.classId, pendingInvite.id);
     } else {
-      // Send "spot taken" message
       await this.whatsapp.sendMessage({
         to: phone,
         templateName: WHATSAPP_TEMPLATES.SPOT_TAKEN,
@@ -385,7 +343,6 @@ export class WaitlistEngine {
       });
     }
 
-    // Update pending invite
     await prisma.pendingInvite.update({
       where: { id: pendingInvite.id },
       data: {
@@ -396,18 +353,13 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Claim a spot for a member (atomic operation)
-   */
   async claimSpot(
     classId: string,
     memberId: string,
     inviteId: string
   ): Promise<ClaimResult> {
     try {
-      // Use database transaction for atomicity
-      const result = await prisma.$transaction(async (trx) => {
-        // Lock the class row
+      const result = await prisma.$transaction(async (trx: any) => {
         const classDetails = await trx.class.findUnique({
           where: { id: classId },
           select: { availableSpots: true, price: true }
@@ -417,7 +369,6 @@ export class WaitlistEngine {
           return { success: false, reason: 'spot_taken' as const };
         }
 
-        // Check if member already booked
         const existingBooking = await trx.booking.findFirst({
           where: {
             classId,
@@ -430,24 +381,21 @@ export class WaitlistEngine {
           return { success: false, reason: 'already_booked' as const };
         }
 
-        // Decrement available spots
         await trx.class.update({
           where: { id: classId },
           data: { availableSpots: { decrement: 1 } }
         });
 
-        // Create booking
         const booking = await trx.booking.create({
           data: {
             classId,
             memberId,
             status: 'confirmed',
-            paymentStatus: 'completed', // Assume paid via waitlist fill
+            paymentStatus: 'completed',
             amountPaid: classDetails.price
           }
         });
 
-        // Update waitlist entry
         await trx.waitlistEntry.updateMany({
           where: {
             classId,
@@ -459,7 +407,6 @@ export class WaitlistEngine {
         return { success: true, bookingId: booking.id };
       });
 
-      // Update fill event if successful
       if (result.success && result.bookingId) {
         const fillEvent = await prisma.waitlistFillEvent.findFirst({
           where: {
@@ -496,9 +443,6 @@ export class WaitlistEngine {
     }
   }
 
-  /**
-   * Mark other pending invites as taken for a class
-   */
   private async markOtherInvitesTaken(classId: string, winningInviteId: string): Promise<void> {
     await prisma.pendingInvite.updateMany({
       where: {
@@ -510,14 +454,10 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Send rebook nudges after class ends
-   */
   async sendRebookNudges(classId: string): Promise<void> {
     if (!this.settings?.rebookNudgeEnabled) return;
     if (!this.whatsapp) return;
 
-    // Get attendees
     const attendees = await prisma.booking.findMany({
       where: {
         classId,
@@ -531,7 +471,6 @@ export class WaitlistEngine {
 
     if (!classDetails) return;
 
-    // Find next occurrence of same class type
     const nextClass = await prisma.class.findFirst({
       where: {
         classType: classDetails.classType,
@@ -549,7 +488,6 @@ export class WaitlistEngine {
     const teacher = await this.getTeacherName(nextClass.teacherId);
 
     for (const attendee of attendees) {
-      // Check if already booked for next class
       const hasNextBooking = await prisma.booking.findFirst({
         where: {
           memberId: attendee.memberId,
@@ -566,7 +504,6 @@ export class WaitlistEngine {
 
       if (!member) continue;
 
-      // Check for recent nudge
       const recentNudge = await prisma.rebookNudgeLog.findFirst({
         where: {
           memberId: attendee.memberId,
@@ -578,7 +515,6 @@ export class WaitlistEngine {
 
       if (recentNudge) continue;
 
-      // Send nudge
       await this.whatsapp.sendMessage({
         to: member.phone,
         templateName: WHATSAPP_TEMPLATES.REBOOK_NUDGE,
@@ -591,7 +527,6 @@ export class WaitlistEngine {
         ]
       });
 
-      // Log nudge
       await prisma.rebookNudgeLog.create({
         data: {
           memberId: attendee.memberId,
@@ -602,9 +537,6 @@ export class WaitlistEngine {
     }
   }
 
-  /**
-   * Update fill event
-   */
   private async updateFillEvent(
     eventId: string,
     data: Partial<{
@@ -619,18 +551,10 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Get teacher name
-   */
   private async getTeacherName(teacherId: string): Promise<string> {
-    // In real implementation, query teacher table
-    // For now, return generic
     return 'the instructor';
   }
 
-  /**
-   * Format time
-   */
   private formatTime(date: Date): string {
     return date.toLocaleTimeString('en-ZA', {
       hour: '2-digit',
@@ -639,9 +563,6 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Format date
-   */
   private formatDate(date: Date): string {
     return date.toLocaleDateString('en-ZA', {
       weekday: 'short',
@@ -650,9 +571,6 @@ export class WaitlistEngine {
     });
   }
 
-  /**
-   * Format datetime
-   */
   private formatDateTime(date: Date): string {
     return date.toLocaleString('en-ZA', {
       weekday: 'short',
