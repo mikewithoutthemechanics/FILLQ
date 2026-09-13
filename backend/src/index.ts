@@ -16,15 +16,6 @@ import integrationsRouter from './routes/integrations.js';
 import { apiLimiter, webhookLimiter } from './middleware/rateLimit.js';
 import { logger } from './lib/logger.js';
 
-// Extend Express Request to capture rawBody
-declare global {
-  namespace Express {
-    interface Request {
-      rawBody?: Buffer;
-    }
-  }
-}
-
 dotenv.config();
 
 const app = express();
@@ -37,7 +28,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Capture raw body buffer for accurate HMAC signature verification
 app.use(express.json({
   verify: (req: any, res, buf) => {
     req.rawBody = buf;

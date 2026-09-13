@@ -15,11 +15,11 @@ export const apiLimiter = rateLimit({
 });
 
 /**
- * Webhook rate limiter: max 200 requests per minute
+ * Webhook rate limiter: max 60 requests per minute
  */
 export const webhookLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 200,
+  max: 60,
   standardHeaders: true,
   legacyHeaders: false,
   message: {

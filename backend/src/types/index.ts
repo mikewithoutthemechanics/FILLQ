@@ -1,4 +1,16 @@
 // ============================================
+// Express Type Augmentation
+// ============================================
+
+declare global {
+  namespace Express {
+    interface Request {
+      rawBody?: Buffer;
+    }
+  }
+}
+
+// ============================================
 // No-Show Predictor Types
 // ============================================
 

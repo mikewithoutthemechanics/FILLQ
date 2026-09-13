@@ -1,12 +1,10 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/supabase.js';
 import { weatherFactorService } from './WeatherFactorService.js';
 import type { 
   BookingRiskFactors, 
   RiskScoreResult, 
   MembershipType 
 } from '../types/index.js';
-
-const prisma = new PrismaClient();
 
 /**
  * NoShowScorer Service

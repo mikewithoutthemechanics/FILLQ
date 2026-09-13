@@ -17,6 +17,9 @@ function verifyWebhookSignature(req: any): boolean {
       logger.error('WABA_APP_SECRET is not configured in production. Rejecting webhook.');
       return false;
     }
+    // Strict verify in non-prod if signature present
+    const sig = req.headers['x-hub-signature-256'];
+    if (!sig) return false;
     return true;
   }
 
@@ -102,9 +105,16 @@ router.get('/webhook', (req: any, res: any) => {
   const token = req.query['hub.verify_token'];
   const challenge = req.query['hub.challenge'];
 
-  const verifyToken = process.env.WABA_VERIFY_TOKEN || 'filliq-verify-token';
+  const verifyToken = process.env.WABA_VERIFY_TOKEN;
 
-  if (mode === 'subscribe' && token === verifyToken) {
+  if (!verifyToken && process.env.NODE_ENV === 'production') {
+    logger.error('WABA_VERIFY_TOKEN is missing in production');
+    return res.status(500).send('Verification misconfigured');
+  }
+
+  const expectedToken = verifyToken || 'filliq-verify-token';
+
+  if (mode === 'subscribe' && token === expectedToken) {
     logger.info('WhatsApp webhook verified successfully');
     res.status(200).send(challenge);
   } else {

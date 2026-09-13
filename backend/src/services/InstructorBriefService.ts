@@ -19,6 +19,7 @@ export interface AIInstructorBrief {
 /**
  * AI Instructor Brief Generator Service
  * Generates generative instructor briefs detailing member milestones, injury alerts, and returning member welcome prompts.
+ * Optimized with batched queries to prevent N+1 DB bottlenecks.
  */
 export class InstructorBriefService {
   /**
@@ -35,20 +36,55 @@ export class InstructorBriefService {
       where: { classId, status: 'confirmed' }
     });
 
+    if (confirmedBookings.length === 0) {
+      return {
+        classId,
+        className: classItem.name,
+        startTime: classItem.startTime.toISOString(),
+        totalConfirmed: 0,
+        newMembersCount: 0,
+        returningMembersCount: 0,
+        highRiskCount: 0,
+        summaryText: `No confirmed bookings yet for ${classItem.name}.`,
+        memberInsights: []
+      };
+    }
+
+    const memberIds = confirmedBookings.map(b => b.memberId);
+
+    // Batch query members, attendance counts, and churn signals
+    const [members, attendanceCounts, churnSignals, highRiskCount] = await Promise.all([
+      prisma.member.findMany({
+        where: { id: { in: memberIds } }
+      }),
+      prisma.booking.groupBy({
+        by: ['memberId'],
+        where: { memberId: { in: memberIds }, status: 'attended' },
+        _count: { _all: true }
+      }),
+      prisma.memberChurnSignal.findMany({
+        where: { memberId: { in: memberIds }, churnScore: { gte: 65 } },
+        orderBy: { signalDate: 'desc' },
+        distinct: ['memberId']
+      }),
+      prisma.bookingRiskScore.count({
+        where: { classId, atRisk: true }
+      })
+    ]);
+
+    const memberMap = new Map(members.map(m => [m.id, m]));
+    const attendanceMap = new Map(attendanceCounts.map(a => [a.memberId, a._count._all]));
+    const churnMap = new Map(churnSignals.map(s => [s.memberId, s]));
+
     const memberInsights: AIInstructorBrief['memberInsights'] = [];
     let newMembersCount = 0;
     let returningMembersCount = 0;
 
-    for (const booking of confirmedBookings) {
-      const member = await prisma.member.findUnique({
-        where: { id: booking.memberId }
-      });
-
+    for (const memberId of memberIds) {
+      const member = memberMap.get(memberId);
       if (!member) continue;
 
-      const totalBookings = await prisma.booking.count({
-        where: { memberId: member.id, status: 'attended' }
-      });
+      const totalBookings = attendanceMap.get(memberId) || 0;
 
       if (totalBookings === 0) {
         newMembersCount++;
@@ -65,25 +101,15 @@ export class InstructorBriefService {
         });
       }
 
-      // Check if returning after 21+ days absence
-      const churnSignal = await prisma.memberChurnSignal.findFirst({
-        where: { memberId: member.id, churnScore: { gte: 65 } },
-        orderBy: { signalDate: 'desc' }
-      });
-
-      if (churnSignal) {
+      if (churnMap.has(memberId)) {
         returningMembersCount++;
         memberInsights.push({
           memberName: `${member.firstName} ${member.lastName}`,
           type: 'returning_risk',
-          note: `Returning after a break — make them feel right at home!`
+          note: 'Returning after a break — make them feel right at home!'
         });
       }
     }
-
-    const highRiskCount = await prisma.bookingRiskScore.count({
-      where: { classId, atRisk: true }
-    });
 
     const timeStr = classItem.startTime.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit', hour12: true });
 
