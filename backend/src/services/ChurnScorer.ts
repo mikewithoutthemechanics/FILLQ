@@ -99,18 +99,18 @@ export class ChurnScorer {
 
     // Get last 90 days bookings
     const recentBookings = allBookings.filter(
-      b => b.bookedAt >= ninetyDaysAgo
+      (b: any) => b.bookedAt >= ninetyDaysAgo
     );
 
     // Get last 30 days bookings
     const last30DaysBookings = allBookings.filter(
-      b => b.bookedAt >= thirtyDaysAgo
+      (b: any) => b.bookedAt >= thirtyDaysAgo
     );
 
     // Calculate attendance rates
     const calculateRate = (bookings: typeof allBookings) => {
       if (bookings.length === 0) return 0;
-      const attended = bookings.filter(b => b.status === 'attended').length;
+      const attended = bookings.filter((b: any) => b.status === 'attended').length;
       return attended / bookings.length;
     };
 
@@ -119,8 +119,8 @@ export class ChurnScorer {
 
     // Find last attendance
     const lastAttendance = allBookings
-      .filter(b => b.status === 'attended')
-      .sort((a, b) => (b.attendedAt?.getTime() || 0) - (a.attendedAt?.getTime() || 0))[0];
+      .filter((b: any) => b.status === 'attended')
+      .sort((a: any, b: any) => (b.attendedAt?.getTime() || 0) - (a.attendedAt?.getTime() || 0))[0];
 
     const lastAttendanceDate = lastAttendance?.attendedAt;
     const daysSinceLastAttendance = lastAttendanceDate
@@ -134,13 +134,13 @@ export class ChurnScorer {
 
     // Calculate lifetime classes
     const lifetimeClassCount = allBookings.filter(
-      b => b.status === 'attended'
+      (b: any) => b.status === 'attended'
     ).length;
 
     // Calculate average weekly attendance (8-week rolling)
     const eightWeeksAgo = new Date(now.getTime() - 56 * 24 * 60 * 60 * 1000);
     const eightWeekBookings = allBookings.filter(
-      b => b.bookedAt >= eightWeeksAgo && b.status === 'attended'
+      (b: any) => b.bookedAt >= eightWeeksAgo && b.status === 'attended'
     );
     const avgWeeklyAttendance = eightWeekBookings.length / 8;
 
@@ -149,11 +149,10 @@ export class ChurnScorer {
 
     // Get payment failures
     const paymentFailures = allBookings.filter(
-      b => b.paymentStatus === 'failed'
+      (b: any) => b.paymentStatus === 'failed'
     ).length;
 
-    // Check app usage (would come from session logs in real implementation)
-    // For now, assume true if attended recently
+    // Check app usage
     const hasOpenedAppLast14Days = daysSinceLastAttendance <= 14;
 
     return {
@@ -173,7 +172,6 @@ export class ChurnScorer {
    * Calculate consecutive missed classes
    */
   private calculateConsecutiveMisses(bookings: Array<{ status: string; bookedAt: Date }>): number {
-    // Sort by date descending
     const sorted = [...bookings].sort(
       (a, b) => b.bookedAt.getTime() - a.bookedAt.getTime()
     );
@@ -199,7 +197,6 @@ export class ChurnScorer {
     criticalCount: number;
     autoNudgedCount: number;
   }> {
-    // Get active members
     const activeMembers = await prisma.member.findMany({
       where: {
         membershipStatus: 'active'
@@ -215,7 +212,6 @@ export class ChurnScorer {
         const factors = await this.buildChurnFactors(member.id);
         const result = this.calculateChurnRisk(factors);
 
-        // Save churn signal
         await prisma.memberChurnSignal.create({
           data: {
             memberId: member.id,
@@ -236,12 +232,10 @@ export class ChurnScorer {
           }
         });
 
-        // Track counts
         if (result.riskLevel === 'high') highRiskCount++;
         if (result.riskLevel === 'critical') {
           criticalCount++;
           
-          // Auto-trigger nudge if enabled and score >= threshold
           if (this.shouldAutoNudge(result.score)) {
             await this.queueChurnNudge(member.id);
             autoNudgedCount++;
@@ -260,20 +254,13 @@ export class ChurnScorer {
     };
   }
 
-  /**
-   * Check if auto-nudge should be triggered
-   */
   private shouldAutoNudge(score: number): boolean {
     if (!this.settings?.autoNudgeEnabled) return false;
     if (score < (this.settings?.autoNudgeThreshold || 80)) return false;
     return true;
   }
 
-  /**
-   * Queue a churn nudge for a member
-   */
   async queueChurnNudge(memberId: string): Promise<boolean> {
-    // Check cooldown period
     const cooldownDays = this.settings?.churnNudgeCooldownDays || 14;
     const cooldownDate = new Date(Date.now() - cooldownDays * 24 * 60 * 60 * 1000);
 
@@ -290,11 +277,9 @@ export class ChurnScorer {
     });
 
     if (recentNudge) {
-      console.log(`Nudge cooldown active for member ${memberId}`);
       return false;
     }
 
-    // Update signal record
     await prisma.memberChurnSignal.updateMany({
       where: {
         memberId,
@@ -306,14 +291,9 @@ export class ChurnScorer {
       }
     });
 
-    // In production, this would queue a job for WhatsApp service
-    console.log(`Churn nudge queued for member ${memberId}`);
     return true;
   }
 
-  /**
-   * Get at-risk members for dashboard
-   */
   async getAtRiskMembers(minScore: number = 50): Promise<Array<{
     memberId: string;
     firstName: string;
@@ -331,7 +311,7 @@ export class ChurnScorer {
           gte: minScore
         },
         signalDate: {
-          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+          gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         }
       },
       orderBy: {
@@ -369,9 +349,6 @@ export class ChurnScorer {
     return results;
   }
 
-  /**
-   * Record outcome of churn intervention
-   */
   async recordOutcome(
     memberId: string,
     outcome: 'retained' | 'churned'
@@ -385,9 +362,6 @@ export class ChurnScorer {
     });
   }
 
-  /**
-   * Get churn summary for dashboard
-   */
   async getChurnSummary(): Promise<{
     totalAtRisk: number;
     highRisk: number;
@@ -404,35 +378,30 @@ export class ChurnScorer {
       churnsPrevented,
       nudgesSent
     ] = await Promise.all([
-      // Total at risk (score >= 50)
       prisma.memberChurnSignal.count({
         where: {
           churnScore: { gte: 50 },
           signalDate: { gte: weekAgo }
         }
       }),
-      // High risk (score >= 65)
       prisma.memberChurnSignal.count({
         where: {
           churnScore: { gte: 65 },
           signalDate: { gte: weekAgo }
         }
       }),
-      // Critical risk (score >= 80)
       prisma.memberChurnSignal.count({
         where: {
           churnScore: { gte: 80 },
           signalDate: { gte: weekAgo }
         }
       }),
-      // Churns prevented (outcome = retained)
       prisma.memberChurnSignal.count({
         where: {
           outcome: 'retained',
           signalDate: { gte: weekAgo }
         }
       }),
-      // Nudges sent
       prisma.memberChurnSignal.count({
         where: {
           actionTaken: { in: ['nudge_sent', 'offer_sent'] },

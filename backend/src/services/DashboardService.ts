@@ -45,7 +45,7 @@ export class DashboardService {
 
     // Calculate metrics
     const revenueRecovered = fillEvents.reduce(
-      (sum, e) => sum + Number(e.revenueRecovered || 0),
+      (sum: number, e: any) => sum + Number(e.revenueRecovered || 0),
       0
     );
 
@@ -53,11 +53,11 @@ export class DashboardService {
 
     // Calculate average fill time
     const fillTimes = fillEvents
-      .map(e => e.fillTimeSeconds)
-      .filter((t): t is number => t !== null && t !== undefined);
+      .map((e: any) => e.fillTimeSeconds)
+      .filter((t: any): t is number => t !== null && t !== undefined);
     
     const avgFillTimeSeconds = fillTimes.length > 0
-      ? fillTimes.reduce((a, b) => a + b, 0) / fillTimes.length
+      ? fillTimes.reduce((a: number, b: number) => a + b, 0) / fillTimes.length
       : 0;
     
     const avgFillTimeMinutes = Math.round(avgFillTimeSeconds / 60);
@@ -112,7 +112,7 @@ export class DashboardService {
         }
       });
 
-      const spotsFilled = fillEvents.filter(e => e.filled).length;
+      const spotsFilled = fillEvents.filter((e: any) => e.filled).length;
       const totalEvents = fillEvents.length;
       const spotsEmpty = totalEvents - spotsFilled;
       const fillRate = totalEvents > 0 ? Math.round((spotsFilled / totalEvents) * 100) : 0;
@@ -134,7 +134,7 @@ export class DashboardService {
   async getAtRiskMembers(): Promise<AtRiskMember[]> {
     const members = await churnScorer.getAtRiskMembers(50);
 
-    return members.map(m => ({
+    return members.map((m: any) => ({
       memberId: m.memberId,
       firstName: m.firstName,
       lastName: m.lastName,
@@ -153,7 +153,6 @@ export class DashboardService {
     const endOfDay = new Date(now);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Get today's upcoming classes for this teacher
     const classes = await prisma.class.findMany({
       where: {
         teacherId,
@@ -171,7 +170,6 @@ export class DashboardService {
     const briefs: TeacherClassBrief[] = [];
 
     for (const classItem of classes) {
-      // Get confirmed bookings
       const confirmedBookings = await prisma.booking.findMany({
         where: {
           classId: classItem.id,
@@ -179,7 +177,6 @@ export class DashboardService {
         }
       });
 
-      // Get high risk bookings
       const highRiskCount = await prisma.bookingRiskScore.count({
         where: {
           classId: classItem.id,
@@ -190,7 +187,6 @@ export class DashboardService {
         }
       });
 
-      // Get waitlist count
       const waitlistCount = await prisma.waitlistEntry.count({
         where: {
           classId: classItem.id,
@@ -198,7 +194,6 @@ export class DashboardService {
         }
       });
 
-      // Count new members (less than 3 lifetime bookings)
       let newMembersCount = 0;
       for (const booking of confirmedBookings) {
         const bookingCount = await prisma.booking.count({
@@ -212,7 +207,6 @@ export class DashboardService {
         }
       }
 
-      // Generate note
       let note = '';
       if (highRiskCount >= 2) {
         note = `${highRiskCount} high no-show risk — waitlist on standby`;
@@ -325,7 +319,6 @@ export class DashboardService {
     const startOfMonth = new Date(year, month - 1, 1);
     const endOfMonth = new Date(year, month, 0, 23, 59, 59);
 
-    // Get fill events
     const fillEvents = await prisma.waitlistFillEvent.findMany({
       where: {
         triggeredAt: {
@@ -335,21 +328,20 @@ export class DashboardService {
       }
     });
 
-    const filledEvents = fillEvents.filter(e => e.filled);
+    const filledEvents = fillEvents.filter((e: any) => e.filled);
     const revenueRecovered = filledEvents.reduce(
-      (sum, e) => sum + Number(e.revenueRecovered || 0),
+      (sum: number, e: any) => sum + Number(e.revenueRecovered || 0),
       0
     );
 
     const fillTimes = filledEvents
-      .map(e => e.fillTimeSeconds)
-      .filter((t): t is number => t !== null && t !== undefined);
+      .map((e: any) => e.fillTimeSeconds)
+      .filter((t: any): t is number => t !== null && t !== undefined);
     
     const avgFillTimeSeconds = fillTimes.length > 0
-      ? fillTimes.reduce((a, b) => a + b, 0) / fillTimes.length
+      ? fillTimes.reduce((a: number, b: number) => a + b, 0) / fillTimes.length
       : 0;
 
-    // Get churn metrics
     const churnSignals = await prisma.memberChurnSignal.findMany({
       where: {
         signalDate: {
@@ -359,13 +351,12 @@ export class DashboardService {
       }
     });
 
-    const churnsPrevented = churnSignals.filter(s => s.outcome === 'retained').length;
-    const atRiskMembersFlagged = new Set(churnSignals.map(s => s.memberId)).size;
+    const churnsPrevented = churnSignals.filter((s: any) => s.outcome === 'retained').length;
+    const atRiskMembersFlagged = new Set(churnSignals.map((s: any) => s.memberId)).size;
     const nudgesSent = churnSignals.filter(
-      s => s.actionTaken === 'nudge_sent' || s.actionTaken === 'offer_sent'
+      (s: any) => s.actionTaken === 'nudge_sent' || s.actionTaken === 'offer_sent'
     ).length;
 
-    // Get rebook nudges
     const rebookNudges = await prisma.rebookNudgeLog.findMany({
       where: {
         sentAt: {
@@ -375,7 +366,7 @@ export class DashboardService {
       }
     });
 
-    const rebookNudgesConverted = rebookNudges.filter(n => n.booked).length;
+    const rebookNudgesConverted = rebookNudges.filter((n: any) => n.booked).length;
 
     const fillRate = fillEvents.length > 0
       ? Math.round((filledEvents.length / fillEvents.length) * 100)
